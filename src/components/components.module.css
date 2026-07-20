@@ -1,0 +1,61 @@
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--teal-800);
+  text-decoration: none;
+}
+
+.brandMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  background: var(--teal-600);
+  color: white;
+}
+
+.brandText,
+.brandTextCompact {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.brandTextCompact {
+  font-size: 18px;
+}
+
+.confirmButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 18px;
+  border: 2px solid var(--teal-600);
+  border-radius: var(--radius-md);
+  background: var(--teal-600);
+  color: white;
+  font-weight: 700;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.confirmButton:hover {
+  background: var(--teal-800);
+  border-color: var(--teal-800);
+}
+
+.confirmButtonArmed {
+  background: white;
+  color: var(--teal-800);
+}
+
+@media (max-width: 480px) {
+  .brandTextCompact {
+    display: none;
+  }
+}

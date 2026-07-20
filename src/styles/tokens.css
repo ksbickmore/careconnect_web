@@ -1,0 +1,28 @@
+:root {
+  --teal-900: #04342c;
+  --teal-800: #085041;
+  --teal-700: #0a4a3a;
+  --teal-600: #0f6e56;
+  --teal-400: #1d9e75;
+  --teal-100: #9fe1cb;
+  --teal-50: #e1f5ee;
+  --amber-900: #412402;
+  --amber-700: #854f0b;
+  --amber-600: #ba7517;
+  --amber-200: #fac775;
+  --amber-50: #faeeda;
+  --emergency: #d93838;
+  --emergency-bg: #fce8e8;
+  --text: #2c2c2a;
+  --muted: #6f6e68;
+  --border: #d3d1c7;
+  --background: #f1efe8;
+  --surface: #ffffff;
+  --surface-alt: #fbfaf6;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow: 0 16px 45px rgb(4 52 44 / 10%);
+  --font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}

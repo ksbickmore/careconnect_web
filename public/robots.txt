@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /medications
+Disallow: /schedule
+Disallow: /messages
+Disallow: /health-log
+Disallow: /emergency
+Disallow: /profile
+Disallow: /settings
+
