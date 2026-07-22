@@ -1,5 +1,9 @@
 # CareConnect Web
 
+[![Build](https://github.com/ksbickmore/careconnect_web/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/ksbickmore/careconnect_web/actions/workflows/build.yml)
+[![Tests](https://github.com/ksbickmore/careconnect_web/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/ksbickmore/careconnect_web/actions/workflows/test.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fksbickmore%2Fcareconnect_web%2Fbadges%2Fcoverage.json)](https://github.com/ksbickmore/careconnect_web/actions/workflows/test.yml)
+
 CareConnect Web is the responsive browser port of the local CareConnect desktop
 and Expo applications. The desktop app is the functional source of truth, the
 Expo app guides narrow-screen behavior, and the local `.figma` exports guide

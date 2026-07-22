@@ -1,0 +1,42 @@
+# Verifies the app compiles: typecheck, lint, and a full production Vite
+# build (prebuild fetches the Whisper models into public/models). Kept
+# separate from test.yml so the README gets independent Build / Tests badges
+# (GitHub exposes one badge per workflow).
+
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - run: npm ci --no-audit --no-fund --loglevel=error
+
+      # prebuild fetches the Whisper models (~220 MB) into public/models;
+      # cache them so CI only re-downloads when the fetch script or the
+      # pinned dependency versions change.
+      - name: Cache Whisper models
+        uses: actions/cache@v4
+        with:
+          path: public/models
+          key: models-${{ hashFiles('scripts/fetch-models.mjs', 'package-lock.json') }}
+
+      - run: npm run typecheck
+
+      - run: npm run lint
+
+      - run: npm run build
