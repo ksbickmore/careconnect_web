@@ -27,8 +27,12 @@ working offline once the model is cached.
 - Say **"what can I say"** at any time to hear the commands available on the
   current page.
 - While a dialog is open, speaking into a focused text field dictates into it.
-- The first voice use on a device downloads the speech model (see below), so
-  it takes a few extra seconds; afterwards the model loads from cache.
+- The first voice use on a device downloads the speech model (see below).
+  While it downloads, the bar shows **"Downloading voice model… N%"**, then
+  **"Preparing voice recognition…"** while the model compiles; afterwards the
+  model loads from cache and both messages are skipped.
+- Errors (mic denied, model failed to load, …) appear highlighted in the bar
+  and are announced assertively to screen readers.
 
 ## Command reference
 
@@ -103,6 +107,11 @@ mic (getUserMedia, 16 kHz mono)
   the engine behind it can change without touching any page.
 - The worker and model are created lazily on first voice use and kept for the
   app's lifetime.
+- While the model files download, the worker aggregates transformers.js
+  per-file progress events into one 0–100 percent
+  (`src/lib/speech/whisper/model-progress.ts`) and posts `progress` messages;
+  they flow through the transcriber and engine to `useSpeechRecognition`'s
+  `modelProgress`, which the voice bar renders as download/preparing status.
 - COOP/COEP headers (set in `vite.config.ts` for dev/preview and
   `vercel.json` for production) make the origin cross-origin isolated,
   enabling SharedArrayBuffer so ONNX Runtime runs multi-threaded. If the
@@ -163,7 +172,7 @@ Production builds are plain static hosting and unaffected.
 | "Microphone access was denied." | Grant mic permission in the browser's site settings; the app asks only when the mic button is first tapped. |
 | "No microphone was found." | No input device (common in VMs/headless). Plug one in or check OS input settings. |
 | "Speech model failed to load…" | `public/models/` missing (run `npm run models`) or the download was interrupted — the engine retries on the next utterance. |
-| First transcription is slow | Expected: the model (~40–85 MB) downloads and compiles on first voice use, then loads from cache. |
+| First transcription is slow | Expected: the model (~40–85 MB) downloads and compiles on first voice use — the bar shows "Downloading voice model… N%" then "Preparing voice recognition…" — then loads from cache. |
 | Slow transcription on every use | Check `crossOriginIsolated === true` in the console; if false, COOP/COEP headers are being stripped and ORT is single-threaded. |
 | Voice unavailable offline before first use | The model is cached only after the first voice use online; use voice once while connected. |
 | Short silences transcribed as "you"/"thank you" | Known Whisper hallucination on near-silent audio; harmless — no command matches. |

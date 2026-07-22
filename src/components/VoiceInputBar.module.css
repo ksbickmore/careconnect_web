@@ -50,6 +50,12 @@
   color: rgb(255 255 255 / 88%);
 }
 
+/* Error status: readable warning tone against the dark teal bar. */
+.error {
+  color: var(--amber-400, #fbbf6e);
+  font-weight: 600;
+}
+
 .kbd {
   padding: 3px 8px;
   border-radius: 6px;

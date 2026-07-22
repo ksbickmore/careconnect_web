@@ -23,6 +23,7 @@ function mockSpeech(state: { listening?: boolean; available?: boolean }) {
       listening: state.listening ?? false,
       transcript: '',
       error: null,
+      modelProgress: null,
       available: state.available ?? true,
       start,
       stop,

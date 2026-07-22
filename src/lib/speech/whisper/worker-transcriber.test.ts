@@ -96,6 +96,19 @@ describe('createWorkerTranscriber', () => {
     await expect(result).rejects.toThrow('Model failed.');
   });
 
+  it('broadcasts model-load progress to every pending request', () => {
+    const transcriber = loadTranscriber();
+    const firstProgress = jest.fn();
+    const secondProgress = jest.fn();
+    void transcriber.transcribe(PCM(), jest.fn(), firstProgress);
+    void transcriber.transcribe(PCM(), jest.fn(), secondProgress);
+
+    instances[0].onmessage!({ data: { type: 'progress', percent: 42 } });
+
+    expect(firstProgress).toHaveBeenCalledWith(42);
+    expect(secondProgress).toHaveBeenCalledWith(42);
+  });
+
   it('ignores responses for unknown request ids', () => {
     const transcriber = loadTranscriber();
     void transcriber.transcribe(PCM(), jest.fn());

@@ -24,10 +24,15 @@ export type StartMicCapture = (
 ) => Promise<MicCapture>;
 
 export interface Transcriber {
-  /** Transcribe one utterance, streaming partial text while decoding. */
+  /**
+   * Transcribe one utterance, streaming partial text while decoding.
+   * `onProgress` reports model-load progress (0–100) during the first
+   * transcription, while the model files are still downloading.
+   */
   transcribe(
     pcm: Float32Array,
     onPartial: (text: string) => void,
+    onProgress?: (percent: number) => void,
   ): Promise<string>;
 }
 
@@ -92,9 +97,15 @@ export function createWhisperEngine(deps: WhisperEngineDeps): WhisperEngine {
       session.decodeChain = session.decodeChain.then(async () => {
         if (session.ended) return;
         try {
-          const text = await deps.transcriber.transcribe(pcm, (partial) => {
-            if (!session.ended) session.callbacks.onPartial?.(partial);
-          });
+          const text = await deps.transcriber.transcribe(
+            pcm,
+            (partial) => {
+              if (!session.ended) session.callbacks.onPartial?.(partial);
+            },
+            (percent) => {
+              if (!session.ended) session.callbacks.onProgress?.(percent);
+            },
+          );
           if (session.ended) return;
           const trimmed = stripNonSpeech(text).trim();
           if (trimmed) session.callbacks.onFinal?.(trimmed);

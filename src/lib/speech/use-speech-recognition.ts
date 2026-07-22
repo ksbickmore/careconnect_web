@@ -14,6 +14,12 @@ export interface UseSpeechRecognition {
   transcript: string;
   /** Human-readable error from the last session, if any. */
   error: string | null;
+  /**
+   * Model-load progress (0–100) while the speech model is downloading, or
+   * null when no download is in flight. Non-null only on a device's first
+   * voice use; afterwards the model is served from cache.
+   */
+  modelProgress: number | null;
   /** False when the environment lacks speech support. */
   available: boolean;
   start(): Promise<void>;
@@ -32,6 +38,7 @@ export function useSpeechRecognition(
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [modelProgress, setModelProgress] = useState<number | null>(null);
 
   // Keep the latest callback without re-subscribing mid-session. Assigned in
   // an effect (not during render) so aborted renders can't leak into the ref;
@@ -67,16 +74,22 @@ export function useSpeechRecognition(
     setListening(true);
     unsubscribeRef.current = startListening(
       {
-        onPartial: (text) => setTranscript(text),
+        onPartial: (text) => {
+          setModelProgress(null);
+          setTranscript(text);
+        },
         onFinal: (text) => {
+          setModelProgress(null);
           setTranscript(text);
           onFinalRef.current?.(text);
         },
         onError: (message) => setError(message),
+        onProgress: (percent) => setModelProgress(percent),
         onEnd: () => {
           unsubscribeRef.current?.();
           unsubscribeRef.current = null;
           setListening(false);
+          setModelProgress(null);
         },
       },
       { continuous },
@@ -91,6 +104,7 @@ export function useSpeechRecognition(
     listening,
     transcript,
     error,
+    modelProgress,
     available: isSpeechAvailable(),
     start,
     stop,

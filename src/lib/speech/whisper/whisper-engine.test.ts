@@ -99,6 +99,30 @@ describe('createWhisperEngine', () => {
     expect(onEnd).toHaveBeenCalledTimes(1);
   });
 
+  it('forwards model-load progress to the session callbacks', async () => {
+    const mic = makeFakeMic();
+    const transcriber: Transcriber = {
+      async transcribe(_pcm, _onPartial, onProgress) {
+        onProgress?.(30);
+        onProgress?.(80);
+        return 'done';
+      },
+    };
+    const engine = createWhisperEngine({
+      startMicCapture: mic.startMicCapture,
+      transcriber,
+    });
+
+    const onProgress = jest.fn();
+    engine.startListening({ onProgress }, { continuous: true });
+    await flush();
+    mic.emitUtterance(PCM);
+    await flush();
+
+    expect(onProgress).toHaveBeenNthCalledWith(1, 30);
+    expect(onProgress).toHaveBeenNthCalledWith(2, 80);
+  });
+
   it('skips non-speech annotation transcripts without firing onFinal', async () => {
     const mic = makeFakeMic();
     const { transcriber } = makeFakeTranscriber(' [BLANK_AUDIO] (coughs) ');

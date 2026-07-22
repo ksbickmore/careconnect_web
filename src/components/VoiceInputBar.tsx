@@ -86,8 +86,14 @@ export function VoiceInputBar() {
     );
   };
 
-  const { listening, transcript, error, available, start, stop } =
+  const { listening, transcript, error, modelProgress, available, start, stop } =
     useSpeechRecognition(handleFinal, { continuous: true });
+
+  // Errors otherwise appear only as quiet status text; make sure screen
+  // reader users hear them too.
+  useEffect(() => {
+    if (error) announce(error, 'assertive');
+  }, [error, announce]);
 
   useVoiceCommands('global', [
     {
@@ -127,9 +133,22 @@ export function VoiceInputBar() {
     else void start();
   };
 
+  // First voice use on a device downloads the model (~40–85 MB), which can
+  // take minutes on a slow connection — without this the bar just says
+  // "Listening…" and looks broken.
+  const loadingStatus =
+    modelProgress == null
+      ? null
+      : modelProgress < 100
+        ? `Downloading voice model… ${modelProgress}%`
+        : 'Preparing voice recognition…';
+
   const status = listening
-    ? transcript || 'Listening… speak a command, or say "what can I say".'
+    ? transcript ||
+      loadingStatus ||
+      'Listening… speak a command, or say "what can I say".'
     : (error ?? hint ?? 'Tap to speak a command, or press Ctrl+Space.');
+  const isErrorStatus = !listening && error != null;
 
   return (
     <div className={styles.bar}>
@@ -147,7 +166,11 @@ export function VoiceInputBar() {
           <MicOff size={20} aria-hidden="true" />
         )}
       </button>
-      <span className={styles.label}>{status}</span>
+      <span
+        className={`${styles.label} ${isErrorStatus ? styles.error : ''}`}
+      >
+        {status}
+      </span>
       <kbd className={styles.kbd}>Ctrl Space</kbd>
     </div>
   );

@@ -25,6 +25,7 @@ function mockSpeech(state: {
   listening?: boolean;
   transcript?: string;
   error?: string | null;
+  modelProgress?: number | null;
   available?: boolean;
 }) {
   mockUseSpeechRecognition.mockImplementation((handler) => {
@@ -33,6 +34,7 @@ function mockSpeech(state: {
       listening: state.listening ?? false,
       transcript: state.transcript ?? '',
       error: state.error ?? null,
+      modelProgress: state.modelProgress ?? null,
       available: state.available ?? true,
       start,
       stop,
@@ -109,6 +111,44 @@ describe('VoiceInputBar', () => {
     mockSpeech({ error: 'Microphone access was denied.' });
     renderBar();
     expect(screen.getByText('Microphone access was denied.')).toBeInTheDocument();
+  });
+
+  it('shows model download progress while the model loads', () => {
+    mockSpeech({ listening: true, modelProgress: 42 });
+    renderBar();
+    expect(
+      screen.getByText('Downloading voice model… 42%'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows a preparing message when the download is done but the model is still loading', () => {
+    mockSpeech({ listening: true, modelProgress: 100 });
+    renderBar();
+    expect(
+      screen.getByText('Preparing voice recognition…'),
+    ).toBeInTheDocument();
+  });
+
+  it('prefers the live transcript over download progress', () => {
+    mockSpeech({ listening: true, transcript: 'open medi', modelProgress: 80 });
+    renderBar();
+    expect(screen.getByText('open medi')).toBeInTheDocument();
+  });
+
+  it('announces errors assertively for screen readers', () => {
+    mockSpeech({ error: 'The microphone is in use by another application.' });
+    renderBar();
+    expect(useAnnouncerStore.getState().assertive).toBe(
+      'The microphone is in use by another application.',
+    );
+  });
+
+  it('styles the status as an error while one is shown', () => {
+    mockSpeech({ error: 'Microphone access was denied.' });
+    renderBar();
+    expect(screen.getByText('Microphone access was denied.')).toHaveClass(
+      'error',
+    );
   });
 
   it('explains unavailability instead of starting', async () => {

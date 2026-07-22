@@ -16,6 +16,7 @@ import type { TranscribeResponse } from './whisper-worker';
 
 interface PendingRequest {
   onPartial: (text: string) => void;
+  onProgress?: (percent: number) => void;
   resolve: (text: string) => void;
   reject: (error: Error) => void;
 }
@@ -34,6 +35,11 @@ function getWorker(): Worker {
   worker = new WhisperWorker();
   worker.postMessage({ type: 'init', model: pickWhisperModel() });
   worker.onmessage = ({ data }: MessageEvent<TranscribeResponse>) => {
+    if (data.type === 'progress') {
+      // Model-load progress belongs to no single request — fan it out.
+      for (const request of pending.values()) request.onProgress?.(data.percent);
+      return;
+    }
     const request = pending.get(data.id);
     if (!request) return;
     if (data.type === 'partial') {
@@ -59,10 +65,10 @@ function getWorker(): Worker {
 /** Transcriber backed by the shared Whisper worker. */
 export function createWorkerTranscriber(): Transcriber {
   return {
-    transcribe(pcm, onPartial) {
+    transcribe(pcm, onPartial, onProgress) {
       return new Promise<string>((resolve, reject) => {
         const id = nextId++;
-        pending.set(id, { onPartial, resolve, reject });
+        pending.set(id, { onPartial, onProgress, resolve, reject });
         // Transfer the buffer — utterances can be ~1MB and are not reused.
         getWorker().postMessage({ type: 'transcribe', id, pcm }, [pcm.buffer]);
       });

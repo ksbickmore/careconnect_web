@@ -26,6 +26,11 @@ export interface SpeechCallbacks {
   onError?: (message: string) => void;
   /** Recognition session ended (after final result, error, or stop). */
   onEnd?: () => void;
+  /**
+   * Model-load progress (0–100). Fires while the speech model downloads
+   * during the first transcription on a device; silent once cached.
+   */
+  onProgress?: (percent: number) => void;
 }
 
 export interface SpeechOptions {

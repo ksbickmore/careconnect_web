@@ -21,6 +21,7 @@ import {
 } from '@huggingface/transformers';
 
 import type { WhisperModelId } from './model-select';
+import { createProgressAggregator } from './model-progress';
 
 env.allowLocalModels = true; // off by default in browser builds
 env.allowRemoteModels = false;
@@ -52,13 +53,26 @@ export type WorkerRequest = InitRequest | TranscribeRequest;
 export type TranscribeResponse =
   | { type: 'partial'; id: number; text: string }
   | { type: 'final'; id: number; text: string }
-  | { type: 'error'; id: number; message: string };
+  | { type: 'error'; id: number; message: string }
+  /** Model-load progress; not tied to one request, so it carries no id. */
+  | { type: 'progress'; percent: number };
 
 let pipelinePromise: Promise<AutomaticSpeechRecognitionPipeline> | null = null;
 
 function getPipeline(): Promise<AutomaticSpeechRecognitionPipeline> {
+  // Report aggregate download progress so the UI can show that the first
+  // voice use is fetching the model rather than silently "listening".
+  const aggregate = createProgressAggregator();
+  let lastPercent = -1;
   pipelinePromise ??= pipeline('automatic-speech-recognition', model, {
     dtype: 'q8',
+    progress_callback: (event) => {
+      const percent = aggregate(event as Parameters<typeof aggregate>[0]);
+      if (percent !== null && percent !== lastPercent) {
+        lastPercent = percent;
+        post({ type: 'progress', percent });
+      }
+    },
   }).catch((e: unknown) => {
     // Allow a retry on the next utterance instead of caching the failure.
     pipelinePromise = null;
