@@ -52,7 +52,7 @@ Per page (`useVoiceCommands('screen', …)`):
 | Medications | `next/previous medication`, `take medication`, `snooze`, `filter <all/due/taken>`, `add medication` |
 | Schedule | `day view` / `week view` / `month view`, `add appointment` |
 | Health Log | `pain up/down`, `set pain to <0-10>`, `sleep up/down`, `mood <good/ok/low>`, `save entry` |
-| Messages | `next/previous conversation`, `reply <message>`, `send`, `read aloud`, `back` |
+| Messages | `open <contact name>` (also `open conversation with <name>`; "doctor" matches "Dr."), `next/previous conversation`, `reply <message>`, `send`, `read aloud`, `back` |
 | Emergency | `call 911`, `call caregiver`, `confirm` / `yes`, `cancel`, `end call` |
 | Settings | `text size <standard/large/extra large>`, `reduced motion on/off` |
 | Profile | `sign out` / `log out` |
@@ -63,7 +63,7 @@ screen commands):
 | Dialog | Commands |
 | --- | --- |
 | Add medication | `name <text>`, `dose <text>`, `save`, `cancel` |
-| New appointment | `title <text>`, `date <spoken date>`, `time <spoken time>`, `save`, `cancel` |
+| New appointment | `title <text>`, `clinician <name>` (also `doctor <name>`), `location <place>`, `date <spoken date>`, `time <spoken time>`, `save`, `cancel` |
 
 Spoken dates accept "today", "tomorrow", "next friday", "july 5", "the fifth
 of july 2027". Spoken times accept "9 30 am", "noon", "half past" styles like

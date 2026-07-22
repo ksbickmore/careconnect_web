@@ -134,6 +134,20 @@ describe('SchedulePage', () => {
     ).toBe(true);
   });
 
+  it('fills the clinician and location fields by voice', () => {
+    renderSchedule();
+    speak('add appointment');
+    const dialog = screen.getByRole('dialog', { name: 'New appointment' });
+
+    expect(speak('clinician Doctor Smith').feedback).toBe('Clinician set to Doctor Smith.');
+    expect(within(dialog).getByLabelText('Clinician')).toHaveValue('Doctor Smith');
+
+    expect(speak('location Main Street Clinic').feedback).toBe(
+      'Location set to Main Street Clinic.',
+    );
+    expect(within(dialog).getByLabelText('Location')).toHaveValue('Main Street Clinic');
+  });
+
   it('reports unparseable spoken dates and times and supports cancel', () => {
     renderSchedule();
     speak('add appointment');

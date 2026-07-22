@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { speechService } from '@/lib/speech/speech';
 import { useArrowList } from '@/lib/use-arrow-list';
 import { usePageMeta } from '@/lib/use-page-meta';
+import { normalize } from '@/lib/voice/spoken-words';
 import { useVoiceCommands } from '@/lib/voice/use-voice-commands';
 import { useAnnouncerStore } from '@/stores/announcer-store';
 import { useMessagesStore } from '@/stores/messages-store';
@@ -65,7 +66,29 @@ export function MessagesPage() {
     return `Opened the conversation with ${next.contactName}.`;
   };
 
+  // "Dr. Park" is spoken as "doctor park"; fold both to one form so the
+  // spoken name and the stored contact name can be compared loosely.
+  const foldName = (text: string) => normalize(text).replace(/\bdoctor\b/g, 'dr');
+
+  const openByName = (spoken: string): string => {
+    const target = foldName(spoken);
+    const match = target
+      ? conversations.find((conversation) => {
+          const name = foldName(conversation.contactName);
+          return name === target || target.includes(name) || name.includes(target);
+        })
+      : undefined;
+    if (!match) return `Sorry, I could not find a conversation with "${spoken}".`;
+    openConversation(match.id);
+    return `Opened the conversation with ${match.contactName}.`;
+  };
+
   useVoiceCommands('screen', [
+    {
+      phrases: ['open *', 'open conversation with *'],
+      hint: 'open <contact name>',
+      run: (value = '') => openByName(value),
+    },
     {
       phrases: ['next conversation'],
       hint: 'next conversation',

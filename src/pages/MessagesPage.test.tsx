@@ -117,6 +117,29 @@ describe('MessagesPage', () => {
     expect(speak('back').feedback).toBe('Already showing all conversations.');
   });
 
+  it('opens a conversation by contact name via voice', () => {
+    renderMessages();
+
+    expect(speak('open Dr. Park').feedback).toBe('Opened the conversation with Dr. Park.');
+    expect(
+      screen.getByRole('list', { name: 'Messages with Dr. Park' }),
+    ).toBeInTheDocument();
+
+    // "doctor" spoken form matches the abbreviated "Dr." contact name.
+    speak('back');
+    expect(speak('open doctor park').feedback).toBe(
+      'Opened the conversation with Dr. Park.',
+    );
+
+    expect(speak('open conversation with the nurse').feedback).toBe(
+      'Opened the conversation with Nurse.',
+    );
+
+    expect(speak('open casper').feedback).toBe(
+      'Sorry, I could not find a conversation with "casper".',
+    );
+  });
+
   it('reads the latest message aloud when speech synthesis exists', () => {
     const speakSpy = jest.fn();
     Object.defineProperty(window, 'speechSynthesis', {

@@ -152,6 +152,22 @@ export function SchedulePage() {
                 : 'Could not find the title field.',
           },
           {
+            phrases: ['clinician *', 'doctor *'],
+            hint: 'clinician <name>',
+            run: (value = '') =>
+              fillFieldById('appt-clinician', value)
+                ? `Clinician set to ${value}.`
+                : 'Could not find the clinician field.',
+          },
+          {
+            phrases: ['location *'],
+            hint: 'location <place>',
+            run: (value = '') =>
+              fillFieldById('appt-location', value)
+                ? `Location set to ${value}.`
+                : 'Could not find the location field.',
+          },
+          {
             phrases: ['date *'],
             hint: 'date <tomorrow, july 5, next friday>',
             run: (value = '') => {
