@@ -15,7 +15,8 @@ Live site: <https://careconnect-web-tau.vercel.app/>
 
 - Public landing page and accessible sign-in form.
 - Prefilled demo credentials and guest access; no server or real account is
-  required. Guarded routes are preserved through sign-in.
+  required. Guarded routes are preserved through sign-in, and the session
+  persists in localStorage so a page refresh stays signed in until sign-out.
 - Responsive desktop/tablet sidebar and mobile bottom navigation.
 - Dashboard summaries derived live from the medication, schedule, message, and
   health-log stores.
