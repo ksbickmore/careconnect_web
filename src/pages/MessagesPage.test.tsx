@@ -1,11 +1,21 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
 import { MemoryRouter } from 'react-router-dom';
 import { App } from '@/App';
 import { routes } from '@/lib/routes';
+import { dispatchVoiceCommand, type DispatchResult } from '@/lib/voice/voice-registry';
 import { useAuthStore } from '@/stores/auth-store';
 import { useMessagesStore } from '@/stores/messages-store';
+
+/** Dispatch a transcript inside act() since command handlers set state. */
+const speak = (transcript: string): DispatchResult => {
+  let result: DispatchResult = { handled: false };
+  act(() => {
+    result = dispatchVoiceCommand(transcript);
+  });
+  return result;
+};
 
 const renderMessages = () => {
   useAuthStore.setState({ signedIn: true, email: 'demo@careconnect.app' });
@@ -80,6 +90,62 @@ describe('MessagesPage', () => {
     expect(screen.getByRole('button', { name: /Nurse/ })).toHaveFocus();
     await user.keyboard('{ArrowUp}');
     expect(drPark).toHaveFocus();
+  });
+
+  it('walks conversations, drafts, and sends a reply by voice', () => {
+    renderMessages();
+
+    expect(speak('send').feedback).toBe('Open a conversation first.');
+    expect(speak('next conversation').feedback).toMatch(/^Opened the conversation with/);
+
+    expect(speak('send').feedback).toBe(
+      'The reply is empty. Say "reply" followed by your message.',
+    );
+    expect(speak('reply I will bring the symptom log').feedback).toBe(
+      'Reply drafted: I will bring the symptom log. Say "send" to send it.',
+    );
+    expect(speak('send').feedback).toMatch(/^Message sent to /);
+    const thread = screen.getByRole('list', { name: /Messages with/ });
+    expect(
+      within(thread).getByText('I will bring the symptom log'),
+    ).toBeInTheDocument();
+
+    expect(speak('previous conversation').feedback).toMatch(
+      /^Opened the conversation with/,
+    );
+    expect(speak('back').feedback).toBe('Showing all conversations.');
+    expect(speak('back').feedback).toBe('Already showing all conversations.');
+  });
+
+  it('reads the latest message aloud when speech synthesis exists', () => {
+    const speakSpy = jest.fn();
+    Object.defineProperty(window, 'speechSynthesis', {
+      value: { speak: speakSpy, cancel: jest.fn() },
+      configurable: true,
+    });
+    (globalThis as { SpeechSynthesisUtterance?: unknown }).SpeechSynthesisUtterance =
+      class {
+        constructor(public text: string) {}
+      };
+
+    renderMessages();
+    expect(speak('read aloud').feedback).toBe('Open a conversation first.');
+    speak('next conversation');
+    expect(speak('read aloud').feedback).toMatch(/^Reading the latest message from/);
+    expect(speakSpy).toHaveBeenCalledTimes(1);
+    expect((speakSpy.mock.calls[0][0] as { text: string }).text).toMatch(/wrote:/);
+
+    delete (window as { speechSynthesis?: unknown }).speechSynthesis;
+    delete (globalThis as { SpeechSynthesisUtterance?: unknown })
+      .SpeechSynthesisUtterance;
+  });
+
+  it('reports when read aloud is unsupported', () => {
+    renderMessages();
+    speak('next conversation');
+    expect(speak('read aloud').feedback).toBe(
+      'Read aloud is not supported in this browser.',
+    );
   });
 
   it('has no automated axe violations with a thread open', async () => {

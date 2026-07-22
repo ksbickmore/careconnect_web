@@ -1,11 +1,21 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
 import { MemoryRouter } from 'react-router-dom';
 import { App } from '@/App';
 import { routes } from '@/lib/routes';
+import { dispatchVoiceCommand, type DispatchResult } from '@/lib/voice/voice-registry';
 import { useAuthStore } from '@/stores/auth-store';
 import { useHealthLogStore } from '@/stores/health-log-store';
+
+/** Dispatch a transcript inside act() since command handlers set state. */
+const speak = (transcript: string): DispatchResult => {
+  let result: DispatchResult = { handled: false };
+  act(() => {
+    result = dispatchVoiceCommand(transcript);
+  });
+  return result;
+};
 
 const renderHealthLog = () => {
   useAuthStore.setState({ signedIn: true, email: 'demo@careconnect.app' });
@@ -78,6 +88,48 @@ describe('HealthLogPage', () => {
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock');
     expect(screen.getByRole('status')).toHaveTextContent('Health log exported');
     click.mockRestore();
+  });
+
+  it('adjusts pain, sleep, and mood by voice and saves the entry', () => {
+    renderHealthLog();
+
+    expect(speak('pain up').feedback).toBe('Pain level 6 out of 10.');
+    expect(speak('pain down').feedback).toBe('Pain level 5 out of 10.');
+    expect(speak('set pain to seven').feedback).toBe('Pain level 7 out of 10.');
+    expect(speak('set pain to fifty').feedback).toBe(
+      'Say a pain level between 0 and 10.',
+    );
+    expect(screen.getByRole('spinbutton', { name: 'Pain level' })).toHaveAttribute(
+      'aria-valuenow',
+      '7',
+    );
+
+    expect(speak('sleep down').feedback).toBe('Sleep 6.5 hours.');
+    expect(speak('sleep up').feedback).toBe('Sleep 7 hours.');
+
+    expect(speak('mood low').feedback).toBe('Mood set to Low.');
+    expect(screen.getByRole('radio', { name: 'Low' })).toBeChecked();
+    expect(speak('mood terrible').feedback).toBe(
+      'Say "mood" followed by good, OK, or low.',
+    );
+
+    speak('save entry');
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Health entry saved. Pain 7 out of 10, sleep 7 hours.',
+    );
+    expect(useHealthLogStore.getState().entries[0]).toMatchObject({
+      painLevel: 7,
+      sleepHours: 7,
+      mood: 'Low',
+    });
+  });
+
+  it('clamps voice pain and sleep changes at their bounds', () => {
+    renderHealthLog();
+    speak('set pain to 10');
+    expect(speak('pain up').feedback).toBe('Pain level 10 out of 10.');
+    for (let i = 0; i < 15; i += 1) speak('sleep down');
+    expect(speak('sleep down').feedback).toBe('Sleep 0 hours.');
   });
 
   it('has no automated axe violations', async () => {

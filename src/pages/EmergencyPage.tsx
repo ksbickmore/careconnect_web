@@ -4,6 +4,7 @@ import { EmergencyCountdown } from '@/components/EmergencyCountdown';
 import { TwoStepConfirm } from '@/components/TwoStepConfirm';
 import { createContactsRepository } from '@/data/contacts-repository';
 import { usePageMeta } from '@/lib/use-page-meta';
+import { useVoiceCommands } from '@/lib/voice/use-voice-commands';
 import { useAnnouncerStore } from '@/stores/announcer-store';
 import styles from './feature-pages.module.css';
 
@@ -39,6 +40,64 @@ export function EmergencyPage() {
     setConnectedTo(null);
     announce('Call ended.');
   };
+
+  /**
+   * First voice tap clicks the (unarmed) two-step button, arming it; the
+   * TwoStepConfirm announces its own "activate again to confirm" prompt.
+   * "confirm" then clicks whichever button is armed (aria-pressed).
+   */
+  const tapCallButton = (sectionId: string) => {
+    document
+      .querySelector<HTMLButtonElement>(`[aria-labelledby="${sectionId}"] button`)
+      ?.click();
+  };
+
+  useVoiceCommands('screen', [
+    {
+      phrases: ['call 911', 'call emergency', 'call nine one one'],
+      hint: 'call 911',
+      run: () => {
+        tapCallButton('sos-911');
+      },
+    },
+    {
+      phrases: ['call caregiver', `call ${caregiver.name.toLowerCase()}`],
+      hint: 'call caregiver',
+      run: () => {
+        tapCallButton('sos-caregiver');
+      },
+    },
+    {
+      phrases: ['confirm', 'yes', 'confirm call'],
+      hint: 'confirm',
+      run: () => {
+        const armed = document.querySelector<HTMLButtonElement>(
+          'main button[aria-pressed="true"]',
+        );
+        if (!armed) return 'Nothing is waiting for confirmation.';
+        armed.click();
+      },
+    },
+    {
+      phrases: ['cancel', 'cancel call'],
+      hint: 'cancel',
+      run: () => {
+        if (countdownFor) {
+          cancelCountdown();
+          return;
+        }
+        return 'No call to cancel.';
+      },
+    },
+    {
+      phrases: ['end call'],
+      hint: 'end call',
+      run: () => {
+        if (!connectedTo) return 'No call in progress.';
+        endCall();
+      },
+    },
+  ]);
 
   return (
     <div className={styles.page}>

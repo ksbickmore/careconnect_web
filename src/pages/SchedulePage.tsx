@@ -6,6 +6,14 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { TwoStepConfirm } from '@/components/TwoStepConfirm';
 import { clockLabel, minuteStamp, slugify, whenLabel } from '@/lib/format';
 import { usePageMeta } from '@/lib/use-page-meta';
+import { fillFieldById } from '@/lib/voice/dom-actions';
+import {
+  formatSpokenDate,
+  formatSpokenTime,
+  parseSpokenDate,
+  parseSpokenTime,
+} from '@/lib/voice/spoken-datetime';
+import { useVoiceCommands } from '@/lib/voice/use-voice-commands';
 import type { Appointment } from '@/models/types';
 import { useAnnouncerStore } from '@/stores/announcer-store';
 import { useAppointmentsStore } from '@/stores/appointments-store';
@@ -110,6 +118,81 @@ export function SchedulePage() {
       setAddError(error instanceof Error ? error.message : 'Could not add the appointment.');
     }
   };
+
+  useVoiceCommands('screen', [
+    ...VIEWS.map(({ id, label }) => ({
+      phrases: [`${id} view`, `show ${id} view`],
+      hint: `${id} view`,
+      run: () => {
+        setView(id);
+        return `Showing the ${label.toLowerCase()} view.`;
+      },
+    })),
+    {
+      phrases: ['add appointment', 'new appointment'],
+      hint: 'add appointment',
+      run: () => {
+        setAddError('');
+        setAddOpen(true);
+        return 'Opening the new appointment form.';
+      },
+    },
+  ]);
+
+  useVoiceCommands(
+    'dialog',
+    addOpen
+      ? [
+          {
+            phrases: ['title *'],
+            hint: 'title <appointment name>',
+            run: (value = '') =>
+              fillFieldById('appt-title', value)
+                ? `Title set to ${value}.`
+                : 'Could not find the title field.',
+          },
+          {
+            phrases: ['date *'],
+            hint: 'date <tomorrow, july 5, next friday>',
+            run: (value = '') => {
+              const iso = parseSpokenDate(value);
+              if (!iso) return `Sorry, I did not understand the date "${value}".`;
+              return fillFieldById('appt-date', iso)
+                ? `Date set to ${formatSpokenDate(iso)}.`
+                : 'Could not find the date field.';
+            },
+          },
+          {
+            phrases: ['time *'],
+            hint: 'time <9 30 am, noon>',
+            run: (value = '') => {
+              const hhmm = parseSpokenTime(value);
+              if (!hhmm) return `Sorry, I did not understand the time "${value}".`;
+              return fillFieldById('appt-time', hhmm)
+                ? `Time set to ${formatSpokenTime(hhmm)}.`
+                : 'Could not find the time field.';
+            },
+          },
+          {
+            phrases: ['save', 'save appointment'],
+            hint: 'save',
+            run: () => {
+              document
+                .querySelector<HTMLFormElement>('[role="dialog"] form')
+                ?.requestSubmit();
+            },
+          },
+          {
+            phrases: ['cancel', 'close dialog'],
+            hint: 'cancel',
+            run: () => {
+              setAddOpen(false);
+              return 'Closed without saving.';
+            },
+          },
+        ]
+      : [],
+  );
 
   // Month grid for the current month: array of weeks, each 7 cells (or null).
   const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });

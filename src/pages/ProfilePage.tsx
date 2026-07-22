@@ -4,6 +4,7 @@ import { createContactsRepository } from '@/data/contacts-repository';
 import { displayName } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { usePageMeta } from '@/lib/use-page-meta';
+import { useVoiceCommands } from '@/lib/voice/use-voice-commands';
 import { useAuthStore } from '@/stores/auth-store';
 import styles from './feature-pages.module.css';
 
@@ -25,6 +26,17 @@ export function ProfilePage() {
     signOut();
     void navigate(routes.login, { replace: true });
   };
+
+  useVoiceCommands('screen', [
+    {
+      phrases: ['sign out', 'log out'],
+      hint: 'sign out',
+      run: () => {
+        leave();
+        return 'Signed out.';
+      },
+    },
+  ]);
 
   return (
     <div className={styles.page}>

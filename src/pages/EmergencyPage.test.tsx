@@ -4,7 +4,17 @@ import axe from 'axe-core';
 import { MemoryRouter } from 'react-router-dom';
 import { App } from '@/App';
 import { routes } from '@/lib/routes';
+import { dispatchVoiceCommand, type DispatchResult } from '@/lib/voice/voice-registry';
 import { useAuthStore } from '@/stores/auth-store';
+
+/** Dispatch a transcript inside act() since command handlers set state. */
+const speak = (transcript: string): DispatchResult => {
+  let result: DispatchResult = { handled: false };
+  act(() => {
+    result = dispatchVoiceCommand(transcript);
+  });
+  return result;
+};
 
 const renderEmergency = () => {
   useAuthStore.setState({ signedIn: true, email: 'demo@careconnect.app' });
@@ -86,6 +96,48 @@ describe('EmergencyPage', () => {
 
     await user.click(callButtons[0]);
     expect(screen.getByRole('alertdialog', { name: 'Calling Dr. Park' })).toBeInTheDocument();
+  });
+
+  it('arms and confirms a 911 call by voice, then cancels the countdown', () => {
+    renderEmergency();
+
+    expect(speak('confirm').feedback).toBe('Nothing is waiting for confirmation.');
+    expect(speak('cancel').feedback).toBe('No call to cancel.');
+
+    speak('call 911');
+    expect(screen.getByRole('button', { name: /Tap again to confirm/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    speak('confirm');
+    expect(screen.getByRole('alertdialog', { name: 'Calling 911' })).toBeInTheDocument();
+
+    speak('cancel');
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Call cancelled.');
+  });
+
+  it('calls the caregiver and ends the connected call by voice', () => {
+    renderEmergency();
+
+    expect(speak('end call').feedback).toBe('No call in progress.');
+
+    speak('call caregiver');
+    speak('confirm');
+    expect(
+      screen.getByRole('alertdialog', { name: 'Calling Sarah Vance' }),
+    ).toBeInTheDocument();
+
+    for (let i = 0; i < 5; i += 1) {
+      act(() => jest.advanceTimersByTime(1000));
+    }
+    expect(screen.getByRole('status', { name: 'Call status' })).toHaveTextContent(
+      'Connecting to Sarah Vance…',
+    );
+
+    speak('end call');
+    expect(screen.queryByRole('status', { name: 'Call status' })).not.toBeInTheDocument();
   });
 
   it('has no automated axe violations', async () => {

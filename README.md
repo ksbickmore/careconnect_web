@@ -39,6 +39,9 @@ Live site: <https://careconnect-web-tau.vercel.app/>
   [docs/accessibility.md](docs/accessibility.md) for the full documentation.
 - Installable PWA: service worker with a precached app shell, offline support,
   an update prompt on new deployments, and an offline banner.
+- **Voice commands** — persistent voice bar with a fully local Whisper
+  speech-to-text engine (no audio leaves the device), per-page commands,
+  dialog dictation, and read-aloud. See [docs/voice.md](docs/voice.md).
 
 ## Requirements
 
@@ -82,6 +85,7 @@ npm run test:coverage # Jest with coverage (75% global thresholds enforced)
 npm run e2e          # Playwright end-to-end tests (builds and previews first)
 npm run e2e:ui       # Playwright interactive UI mode
 npm run icons        # Regenerate PNG app icons from the source SVG
+npm run models       # Download the local Whisper models into public/models (also runs pre-dev/build)
 ```
 
 ## Testing
@@ -163,14 +167,27 @@ and focus-management behavior — lives in
   Workbox `injectManifest` with the network-first API caching described in
   `web_app_plans_patterns.md`.
 
-## Voice Readiness
+## Voice Commands
 
-Voice features (the desktop app's Whisper engine and voice command bar) are
-out of scope for this milestone. The architecture keeps the door open:
+The desktop app's fully local voice system is ported to the web app: a
+persistent voice bar (visible on every authenticated page), speech-to-text via
+a local Whisper model, a per-page voice command registry, dialog dictation,
+and read-aloud via the browser's speech synthesis.
 
-- `src/lib/speech/speech.ts` defines the `SpeechService` seam a future engine
-  implements (Web Speech API or the desktop Whisper/WASM engine).
-- All actions are announced through the `announcer-store` live regions, which
-  a text-to-speech layer can subscribe to.
-- Every interactive control is reachable by name, which a voice-command
-  registry can target.
+- **Engine** — OpenAI Whisper running entirely in the browser
+  (`@huggingface/transformers` + ONNX Runtime WASM in a Web Worker). No audio
+  ever leaves the device; the Web Speech API was deliberately not used because
+  Chrome's implementation streams audio to Google's servers.
+- **Models** — `npm run models` (runs automatically before `dev` and `build`)
+  downloads two quantized models into `public/models/`: `whisper-tiny.en`
+  (~40 MB, phones) and `whisper-base.en` (~85 MB, laptops/desktops). Each
+  browser detects its device class at runtime and downloads **only** its model,
+  on first voice use — never on page load.
+- **Usage** — tap the mic in the bottom bar or press **Ctrl+Space**, then speak
+  a command ("go to medications", "add appointment", "set pain to seven") or
+  say **"what can I say"** for the commands available on the current page.
+- **Offline** — the model is cached by the service worker after the first
+  voice use, so voice keeps working offline afterwards.
+
+The full command reference, architecture, and troubleshooting guide live in
+[docs/voice.md](docs/voice.md).

@@ -1,10 +1,20 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
 import { MemoryRouter } from 'react-router-dom';
 import { App } from '@/App';
 import { routes } from '@/lib/routes';
+import { dispatchVoiceCommand, type DispatchResult } from '@/lib/voice/voice-registry';
 import { useAuthStore } from '@/stores/auth-store';
+
+/** Dispatch a transcript inside act() since command handlers set state. */
+const speak = (transcript: string): DispatchResult => {
+  let result: DispatchResult = { handled: false };
+  act(() => {
+    result = dispatchVoiceCommand(transcript);
+  });
+  return result;
+};
 
 const renderProfile = (email: string | null = 'demo@careconnect.app') => {
   useAuthStore.setState({ signedIn: true, email });
@@ -45,6 +55,13 @@ describe('ProfilePage', () => {
 
     const session = screen.getByRole('region', { name: 'Session' });
     await user.click(within(session).getByRole('button', { name: 'Sign out' }));
+    expect(useAuthStore.getState().signedIn).toBe(false);
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+  });
+
+  it('signs out by voice', () => {
+    renderProfile();
+    expect(speak('sign out').feedback).toBe('Signed out.');
     expect(useAuthStore.getState().signedIn).toBe(false);
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
   });

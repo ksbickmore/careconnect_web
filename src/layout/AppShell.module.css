@@ -1,17 +1,23 @@
 .shell {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
-  grid-template-rows: auto 60px minmax(0, 1fr);
+  grid-template-rows: auto 60px minmax(0, 1fr) auto;
   grid-template-areas:
     'offline offline'
     'banner banner'
-    'sidebar main';
+    'sidebar main'
+    'sidebar voice';
   min-height: 100vh;
   background: var(--background);
 }
 
 .offlineArea {
   grid-area: offline;
+}
+
+.voiceArea {
+  grid-area: voice;
+  padding: 0 24px calc(12px + env(safe-area-inset-bottom));
 }
 
 .skipLink {
@@ -226,12 +232,24 @@
 @media (max-width: 767px) {
   .shell {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 60px minmax(0, 1fr) auto;
+    grid-template-rows: auto 60px minmax(0, 1fr) auto auto;
     grid-template-areas:
       'offline'
       'banner'
       'main'
+      'voice'
       'bottom';
+  }
+
+  .voiceArea {
+    /* Sticks just above the sticky bottom nav (67px = item 58 + padding 8 +
+       border 1) so the mic stays reachable while the page scrolls. The nav
+       handles the safe-area inset itself. */
+    position: sticky;
+    z-index: 10;
+    bottom: calc(67px + env(safe-area-inset-bottom));
+    padding: 6px 8px;
+    background: var(--background);
   }
 
   .sidebar {

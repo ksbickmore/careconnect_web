@@ -1,12 +1,22 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
 import { MemoryRouter } from 'react-router-dom';
 import { App } from '@/App';
 import { routes } from '@/lib/routes';
+import { dispatchVoiceCommand, type DispatchResult } from '@/lib/voice/voice-registry';
 import { useAuthStore } from '@/stores/auth-store';
 import { useMedicationsStore } from '@/stores/medications-store';
 import { useSettingsStore } from '@/stores/settings-store';
+
+/** Dispatch a transcript inside act() since command handlers set state. */
+const speak = (transcript: string): DispatchResult => {
+  let result: DispatchResult = { handled: false };
+  act(() => {
+    result = dispatchVoiceCommand(transcript);
+  });
+  return result;
+};
 
 const renderSettings = () => {
   useAuthStore.setState({ signedIn: true, email: 'demo@careconnect.app' });
@@ -61,6 +71,25 @@ describe('SettingsPage', () => {
       .medications.find((medication) => medication.id === 'lisinopril-10mg');
     expect(lisinopril).toMatchObject({ status: 'dueSoon' });
     expect(screen.getByRole('status')).toHaveTextContent('Demo data reset');
+  });
+
+  it('changes text size and reduced motion by voice', () => {
+    renderSettings();
+
+    expect(speak('text size extra large').feedback).toBe('Text size set to Extra large.');
+    expect(useSettingsStore.getState().textZoom).toBe(1.3);
+    expect(speak('text size large').feedback).toBe('Text size set to Large.');
+    expect(useSettingsStore.getState().textZoom).toBe(1.15);
+    expect(speak('text size standard').feedback).toBe('Text size set to Standard.');
+    expect(useSettingsStore.getState().textZoom).toBe(1);
+    expect(speak('text size gigantic').feedback).toBe(
+      'Say "text size" followed by standard, large, or extra large.',
+    );
+
+    expect(speak('reduced motion on').feedback).toBe('Reduce motion turned on.');
+    expect(useSettingsStore.getState().reducedMotion).toBe(true);
+    expect(speak('reduced motion off').feedback).toBe('Reduce motion turned off.');
+    expect(useSettingsStore.getState().reducedMotion).toBe(false);
   });
 
   it('has no automated axe violations', async () => {

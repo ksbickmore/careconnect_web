@@ -7,6 +7,8 @@ import { TwoStepConfirm } from '@/components/TwoStepConfirm';
 import { slugify } from '@/lib/format';
 import { useArrowList } from '@/lib/use-arrow-list';
 import { usePageMeta } from '@/lib/use-page-meta';
+import { fillFieldById } from '@/lib/voice/dom-actions';
+import { useVoiceCommands } from '@/lib/voice/use-voice-commands';
 import type { Medication } from '@/models/types';
 import { useAnnouncerStore } from '@/stores/announcer-store';
 import { useMedicationsStore } from '@/stores/medications-store';
@@ -19,6 +21,7 @@ const FILTERS: readonly { id: Filter; label: string }[] = [
   { id: 'due', label: 'Due' },
   { id: 'taken', label: 'Taken' },
 ];
+
 
 export function MedicationsPage() {
   usePageMeta({
@@ -58,6 +61,117 @@ export function MedicationsPage() {
     snooze(medication.id);
     announce(`${medication.name} snoozed. A reminder is set for later.`);
   };
+
+  const moveSelection = (delta: number): string => {
+    if (ordered.length === 0) return 'No medications in this list.';
+    const index = ordered.findIndex((medication) => medication.id === selectedId);
+    const nextIndex =
+      index === -1
+        ? delta > 0
+          ? 0
+          : ordered.length - 1
+        : (index + delta + ordered.length) % ordered.length;
+    const next = ordered[nextIndex];
+    setSelectedId(next.id);
+    return `${next.name} ${next.dose} selected.`;
+  };
+
+  useVoiceCommands('screen', [
+    {
+      phrases: ['next medication'],
+      hint: 'next medication',
+      run: () => moveSelection(1),
+    },
+    {
+      phrases: ['previous medication'],
+      hint: 'previous medication',
+      run: () => moveSelection(-1),
+    },
+    {
+      phrases: ['take medication', 'confirm taken'],
+      hint: 'take medication',
+      run: () => {
+        if (!selected) return 'Select a medication first.';
+        if (selected.status === 'taken') {
+          return `${selected.name} is already logged as taken.`;
+        }
+        markTaken(selected.id);
+        return `${selected.name} ${selected.dose} logged as taken.`;
+      },
+    },
+    {
+      phrases: ['snooze', 'snooze medication'],
+      hint: 'snooze',
+      run: () => {
+        if (!selected || selected.status === 'taken') {
+          return 'Select a due medication first.';
+        }
+        snooze(selected.id);
+        return `${selected.name} snoozed. A reminder is set for later.`;
+      },
+    },
+    {
+      phrases: ['filter *'],
+      hint: 'filter <all, due, taken>',
+      run: (value) => {
+        const spoken = (value ?? '').toLowerCase();
+        const target = FILTERS.find((entry) => spoken.includes(entry.id));
+        if (!target) return 'Say "filter" followed by all, due, or taken.';
+        setFilter(target.id);
+        return `Showing ${target.label.toLowerCase()} medications.`;
+      },
+    },
+    {
+      phrases: ['add medication', 'new medication'],
+      hint: 'add medication',
+      run: () => {
+        setAddError('');
+        setAddOpen(true);
+        return 'Opening the add medication form.';
+      },
+    },
+  ]);
+
+  useVoiceCommands(
+    'dialog',
+    addOpen
+      ? [
+          {
+            phrases: ['name *'],
+            hint: 'name <medication>',
+            run: (value = '') =>
+              fillFieldById('med-name', value)
+                ? `Name set to ${value}.`
+                : 'Could not find the name field.',
+          },
+          {
+            phrases: ['dose *'],
+            hint: 'dose <amount>',
+            run: (value = '') =>
+              fillFieldById('med-dose', value)
+                ? `Dose set to ${value}.`
+                : 'Could not find the dose field.',
+          },
+          {
+            phrases: ['save', 'save medication'],
+            hint: 'save',
+            run: () => {
+              document
+                .querySelector<HTMLFormElement>('[role="dialog"] form')
+                ?.requestSubmit();
+            },
+          },
+          {
+            phrases: ['cancel', 'close dialog'],
+            hint: 'cancel',
+            run: () => {
+              setAddOpen(false);
+              return 'Closed without saving.';
+            },
+          },
+        ]
+      : [],
+  );
 
   const submitAdd = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

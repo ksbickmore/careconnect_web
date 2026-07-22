@@ -1,11 +1,9 @@
 /**
- * Voice-readiness seam. The desktop app is voice-first (local Whisper engine
- * + speechSynthesis read-aloud); the web port defers voice features but keeps
- * this interface so wiring a real engine later is additive, not a refactor.
- *
- * Future implementations: Web Speech API (`speechSynthesis` for output,
- * `SpeechRecognition` for input) or the desktop Whisper/WASM engine (needs
- * COOP/COEP headers).
+ * Text-to-speech service backed by the native `speechSynthesis` API (the
+ * same engine the desktop app uses for read-aloud). Speech *input* is the
+ * separate local Whisper engine (`speech-recognition.ts`); this seam covers
+ * voice output only, so the "read aloud" command and announcement read-back
+ * can evolve without touching any page.
  */
 export interface SpeechService {
   /** Speak the given text aloud, cancelling anything already speaking. */
@@ -15,13 +13,21 @@ export interface SpeechService {
   readonly isSupported: boolean;
 }
 
-/** No-op placeholder used until a real engine ships. */
+function synth(): SpeechSynthesis | undefined {
+  return typeof window !== 'undefined' ? window.speechSynthesis : undefined;
+}
+
 export const speechService: SpeechService = {
-  speak() {
-    // Intentionally empty: voice output is not part of this milestone.
+  speak(text) {
+    const s = synth();
+    if (!s || !text.trim()) return;
+    s.cancel();
+    s.speak(new SpeechSynthesisUtterance(text));
   },
   cancel() {
-    // Intentionally empty.
+    synth()?.cancel();
   },
-  isSupported: false,
+  get isSupported() {
+    return synth() !== undefined;
+  },
 };

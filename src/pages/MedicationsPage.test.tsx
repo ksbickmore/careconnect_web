@@ -1,10 +1,20 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
 import { MemoryRouter } from 'react-router-dom';
 import { App } from '@/App';
 import { routes } from '@/lib/routes';
+import { dispatchVoiceCommand, type DispatchResult } from '@/lib/voice/voice-registry';
 import { useAuthStore } from '@/stores/auth-store';
+
+/** Dispatch a transcript inside act() since command handlers set state. */
+const speak = (transcript: string): DispatchResult => {
+  let result: DispatchResult = { handled: false };
+  act(() => {
+    result = dispatchVoiceCommand(transcript);
+  });
+  return result;
+};
 
 const renderMedications = () => {
   useAuthStore.setState({ signedIn: true, email: 'demo@careconnect.app' });
@@ -117,6 +127,51 @@ describe('MedicationsPage', () => {
     await user.type(within(again).getByLabelText('Dose'), '3 mg');
     await user.click(within(again).getByRole('button', { name: 'Save medication' }));
     expect(within(again).getByRole('alert')).toHaveTextContent('already exists');
+  });
+
+  it('selects, takes, and filters medications by voice', () => {
+    renderMedications();
+
+    expect(speak('next medication').feedback).toMatch(/selected\.$/);
+    expect(
+      screen.getByRole('complementary', { name: 'Medication details' }),
+    ).toBeInTheDocument();
+
+    expect(speak('take medication').feedback).toMatch(/logged as taken\.$/);
+    expect(speak('take medication').feedback).toMatch(/already logged as taken\.$/);
+
+    expect(speak('filter taken').feedback).toBe('Showing taken medications.');
+    expect(screen.getByRole('tab', { name: /Taken/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(speak('filter nonsense').feedback).toBe(
+      'Say "filter" followed by all, due, or taken.',
+    );
+  });
+
+  it('fills and saves the add-medication dialog by voice', () => {
+    renderMedications();
+
+    expect(speak('add medication').feedback).toBe('Opening the add medication form.');
+    const dialog = screen.getByRole('dialog', { name: 'Add medication' });
+
+    expect(speak('name Fish Oil').feedback).toBe('Name set to Fish Oil.');
+    expect(within(dialog).getByLabelText('Name')).toHaveValue('Fish Oil');
+    expect(speak('dose 1000 mg').feedback).toBe('Dose set to 1000 mg.');
+    expect(within(dialog).getByLabelText('Dose')).toHaveValue('1000 mg');
+
+    speak('save');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Fish Oil/ })).toBeInTheDocument();
+  });
+
+  it('closes the add-medication dialog with the voice cancel command', () => {
+    renderMedications();
+    speak('add medication');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(speak('cancel').feedback).toBe('Closed without saving.');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('has no automated axe violations', async () => {

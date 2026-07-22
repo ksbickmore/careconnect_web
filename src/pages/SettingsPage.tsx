@@ -1,5 +1,6 @@
 import { RotateCcw } from 'lucide-react';
 import { usePageMeta } from '@/lib/use-page-meta';
+import { useVoiceCommands } from '@/lib/voice/use-voice-commands';
 import { useAnnouncerStore } from '@/stores/announcer-store';
 import { useAppointmentsStore } from '@/stores/appointments-store';
 import { useHealthLogStore } from '@/stores/health-log-store';
@@ -39,6 +40,45 @@ export function SettingsPage() {
     setReducedMotion(on);
     announce(on ? 'Reduce motion turned on.' : 'Reduce motion turned off.');
   };
+
+  useVoiceCommands('screen', [
+    {
+      phrases: ['text size *', 'set text size to *'],
+      hint: 'text size <standard, large, extra large>',
+      run: (value = '') => {
+        const spoken = value.toLowerCase();
+        // Check "extra large" before "large" — plain includes() would match
+        // the shorter label inside the longer phrase.
+        const target =
+          spoken.includes('extra') || spoken.includes('largest')
+            ? TEXT_SIZES[2]
+            : spoken.includes('large')
+              ? TEXT_SIZES[1]
+              : spoken.includes('standard') || spoken.includes('default') || spoken.includes('normal')
+                ? TEXT_SIZES[0]
+                : null;
+        if (!target) return 'Say "text size" followed by standard, large, or extra large.';
+        setTextZoom(target.value);
+        return `Text size set to ${target.label}.`;
+      },
+    },
+    {
+      phrases: ['reduced motion on', 'reduce motion on', 'turn on reduced motion'],
+      hint: 'reduced motion on',
+      run: () => {
+        setReducedMotion(true);
+        return 'Reduce motion turned on.';
+      },
+    },
+    {
+      phrases: ['reduced motion off', 'reduce motion off', 'turn off reduced motion'],
+      hint: 'reduced motion off',
+      run: () => {
+        setReducedMotion(false);
+        return 'Reduce motion turned off.';
+      },
+    },
+  ]);
 
   const resetDemoData = () => {
     resetMedications();

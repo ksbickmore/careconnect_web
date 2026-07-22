@@ -14,6 +14,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Brand } from '@/components/Brand';
 import { LiveRegions } from '@/components/LiveRegions';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { VoiceInputBar } from '@/components/VoiceInputBar';
 import { routes } from '@/lib/routes';
 import { useApplySettings } from '@/lib/use-apply-settings';
 import { useAuthStore } from '@/stores/auth-store';
@@ -45,6 +46,19 @@ export function AppShell() {
     const heading = document.querySelector<HTMLElement>('main h1');
     heading?.focus();
   }, [location.pathname]);
+
+  // Ctrl+Space toggles the voice command mic from anywhere, including while
+  // typing in a field (documented global shortcut).
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.code === 'Space') {
+        event.preventDefault();
+        document.getElementById('voice-command-mic')?.click();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const leave = () => {
     signOut();
@@ -134,6 +148,10 @@ export function AppShell() {
       <main id="main-content" className={styles.main} tabIndex={-1}>
         <Outlet />
       </main>
+
+      <section className={styles.voiceArea} aria-label="Voice commands">
+        <VoiceInputBar />
+      </section>
 
       <nav className={styles.bottomNav} aria-label="Primary mobile">
         {primaryItems.map(({ mobileLabel, to, icon: Icon }) => (

@@ -1,7 +1,9 @@
 import { ArrowLeft, SendHorizonal } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { speechService } from '@/lib/speech/speech';
 import { useArrowList } from '@/lib/use-arrow-list';
 import { usePageMeta } from '@/lib/use-page-meta';
+import { useVoiceCommands } from '@/lib/voice/use-voice-commands';
 import { useAnnouncerStore } from '@/stores/announcer-store';
 import { useMessagesStore } from '@/stores/messages-store';
 import styles from './feature-pages.module.css';
@@ -46,6 +48,81 @@ export function MessagesPage() {
     setDraft('');
     announce(`Message sent to ${selected.contactName}.`);
   };
+
+  const moveConversation = (delta: number): string => {
+    if (conversations.length === 0) return 'No conversations yet.';
+    const index = conversations.findIndex(
+      (conversation) => conversation.id === selectedId,
+    );
+    const nextIndex =
+      index === -1
+        ? delta > 0
+          ? 0
+          : conversations.length - 1
+        : (index + delta + conversations.length) % conversations.length;
+    const next = conversations[nextIndex];
+    openConversation(next.id);
+    return `Opened the conversation with ${next.contactName}.`;
+  };
+
+  useVoiceCommands('screen', [
+    {
+      phrases: ['next conversation'],
+      hint: 'next conversation',
+      run: () => moveConversation(1),
+    },
+    {
+      phrases: ['previous conversation'],
+      hint: 'previous conversation',
+      run: () => moveConversation(-1),
+    },
+    {
+      phrases: ['reply *'],
+      hint: 'reply <your message>',
+      run: (value = '') => {
+        if (!selected) return 'Open a conversation first.';
+        setDraft(value);
+        return `Reply drafted: ${value}. Say "send" to send it.`;
+      },
+    },
+    {
+      phrases: ['send', 'send message'],
+      hint: 'send',
+      run: () => {
+        const body = draft.trim();
+        if (!selected) return 'Open a conversation first.';
+        if (!body) return 'The reply is empty. Say "reply" followed by your message.';
+        sendMessage(selected.id, body);
+        setDraft('');
+        return `Message sent to ${selected.contactName}.`;
+      },
+    },
+    {
+      phrases: ['read aloud', 'read message', 'read messages'],
+      hint: 'read aloud',
+      run: () => {
+        if (!selected) return 'Open a conversation first.';
+        if (!speechService.isSupported) {
+          return 'Read aloud is not supported in this browser.';
+        }
+        const last = selected.messages.at(-1);
+        if (!last) return 'There are no messages in this conversation.';
+        speechService.speak(
+          `${last.fromMe ? 'You wrote' : `${selected.contactName} wrote`}: ${last.body}`,
+        );
+        return `Reading the latest message from ${selected.contactName}.`;
+      },
+    },
+    {
+      phrases: ['back', 'all conversations'],
+      hint: 'back',
+      run: () => {
+        if (!selected) return 'Already showing all conversations.';
+        backToList();
+        return 'Showing all conversations.';
+      },
+    },
+  ]);
 
   return (
     <div className={styles.page}>

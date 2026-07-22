@@ -5,7 +5,9 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist/', 'coverage/', 'node_modules/', 'docs/'] },
+  // public/models holds downloaded Whisper models + the vendored ONNX
+  // runtime bundle — third-party build output, not our code.
+  { ignores: ['dist/', 'coverage/', 'node_modules/', 'docs/', 'public/models/'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -24,7 +26,19 @@ export default tseslint.config(
     },
   },
   {
-    files: ['*.config.ts'],
+    files: ['*.config.ts', 'scripts/**/*.mjs'],
     languageOptions: { globals: globals.node },
+  },
+  {
+    // AudioWorklet global scope: AudioWorkletProcessor/registerProcessor
+    // exist only inside the audio rendering thread.
+    files: ['src/lib/speech/whisper/pcm-worklet.js'],
+    languageOptions: {
+      globals: {
+        AudioWorkletProcessor: 'readonly',
+        registerProcessor: 'readonly',
+        sampleRate: 'readonly',
+      },
+    },
   },
 );

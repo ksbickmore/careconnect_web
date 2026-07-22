@@ -5,6 +5,8 @@ import { StepControl } from '@/components/StepControl';
 import { buildExportText } from '@/data/health-log-repository';
 import { todayLabel } from '@/lib/format';
 import { usePageMeta } from '@/lib/use-page-meta';
+import { parseSpokenNumber } from '@/lib/voice/spoken-words';
+import { useVoiceCommands } from '@/lib/voice/use-voice-commands';
 import type { LogEntry } from '@/models/types';
 import { useAnnouncerStore } from '@/stores/announcer-store';
 import { useHealthLogStore } from '@/stores/health-log-store';
@@ -39,6 +41,75 @@ export function HealthLogPage() {
     setNote('');
     announce(`Health entry saved. Pain ${painLevel} out of 10, sleep ${sleepHours} hours.`);
   };
+
+  useVoiceCommands('screen', [
+    {
+      phrases: ['pain up', 'increase pain'],
+      hint: 'pain up',
+      run: () => {
+        const next = Math.min(10, painLevel + 1);
+        setPainLevel(next);
+        return `Pain level ${next} out of 10.`;
+      },
+    },
+    {
+      phrases: ['pain down', 'decrease pain'],
+      hint: 'pain down',
+      run: () => {
+        const next = Math.max(0, painLevel - 1);
+        setPainLevel(next);
+        return `Pain level ${next} out of 10.`;
+      },
+    },
+    {
+      phrases: ['set pain to *', 'pain level *'],
+      hint: 'set pain to <0-10>',
+      run: (value = '') => {
+        const level = parseSpokenNumber(value);
+        if (level === null || level < 0 || level > 10) {
+          return 'Say a pain level between 0 and 10.';
+        }
+        setPainLevel(level);
+        return `Pain level ${level} out of 10.`;
+      },
+    },
+    {
+      phrases: ['sleep up', 'increase sleep'],
+      hint: 'sleep up',
+      run: () => {
+        const next = Math.min(14, sleepHours + 0.5);
+        setSleepHours(next);
+        return `Sleep ${next} hours.`;
+      },
+    },
+    {
+      phrases: ['sleep down', 'decrease sleep'],
+      hint: 'sleep down',
+      run: () => {
+        const next = Math.max(0, sleepHours - 0.5);
+        setSleepHours(next);
+        return `Sleep ${next} hours.`;
+      },
+    },
+    {
+      phrases: ['mood *'],
+      hint: 'mood <good, ok, low>',
+      run: (value = '') => {
+        const spoken = value.toLowerCase();
+        const target = MOODS.find((option) => spoken.includes(option.toLowerCase()));
+        if (!target) return 'Say "mood" followed by good, OK, or low.';
+        setMood(target);
+        return `Mood set to ${target}.`;
+      },
+    },
+    {
+      phrases: ['save entry', 'save log'],
+      hint: 'save entry',
+      run: () => {
+        document.querySelector<HTMLFormElement>('main form')?.requestSubmit();
+      },
+    },
+  ]);
 
   const exportLog = () => {
     const blob = new Blob([buildExportText(entries)], { type: 'text/plain' });

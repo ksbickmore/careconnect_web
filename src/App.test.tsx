@@ -89,6 +89,25 @@ describe('CareConnect routes and accessibility foundation', () => {
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
   });
 
+  it('shows the voice command bar in the shell and toggles it with Ctrl+Space', async () => {
+    const user = userEvent.setup();
+    useAuthStore.setState({ signedIn: true, email: 'demo@careconnect.app' });
+    renderAt(routes.dashboard);
+
+    const mic = screen.getByRole('button', { name: 'Start voice command' });
+    expect(mic).toHaveAttribute('id', 'voice-command-mic');
+    expect(
+      screen.getByText('Tap to speak a command, or press Ctrl+Space.'),
+    ).toBeInTheDocument();
+
+    // Plain jsdom has no getUserMedia/Worker, so the shortcut surfaces the
+    // unavailability hint — proving the Ctrl+Space handler clicked the mic.
+    await user.keyboard('{Control>}[Space]{/Control}');
+    expect(
+      screen.getByText('Voice input is not available in this environment.'),
+    ).toBeInTheDocument();
+  });
+
   it('renders the not-found page for unknown routes', () => {
     renderAt('/does-not-exist');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
