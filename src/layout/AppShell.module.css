@@ -1,12 +1,17 @@
 .shell {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
-  grid-template-rows: 60px minmax(0, 1fr);
+  grid-template-rows: auto 60px minmax(0, 1fr);
   grid-template-areas:
+    'offline offline'
     'banner banner'
     'sidebar main';
   min-height: 100vh;
   background: var(--background);
+}
+
+.offlineArea {
+  grid-area: offline;
 }
 
 .skipLink {
@@ -51,9 +56,16 @@
 }
 
 .accountName {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   max-width: 220px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   color: var(--muted);
+  text-decoration: none;
   text-overflow: ellipsis;
   text-transform: capitalize;
   white-space: nowrap;
@@ -214,8 +226,9 @@
 @media (max-width: 767px) {
   .shell {
     grid-template-columns: 1fr;
-    grid-template-rows: 60px minmax(0, 1fr) auto;
+    grid-template-rows: auto 60px minmax(0, 1fr) auto;
     grid-template-areas:
+      'offline'
       'banner'
       'main'
       'bottom';
@@ -229,7 +242,7 @@
     padding-inline: 12px;
   }
 
-  .accountName,
+  .accountName span,
   .signOut span {
     display: none;
   }

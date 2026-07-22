@@ -1,0 +1,38 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 11px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.taken,
+.confirmed {
+  background: var(--teal-50);
+  color: var(--teal-800);
+}
+
+.reminderSet {
+  background: var(--amber-50);
+  color: var(--amber-700);
+}
+
+.dueSoon {
+  background: var(--amber-200);
+  color: var(--amber-900);
+}
+
+.missed {
+  background: var(--emergency-bg);
+  color: var(--emergency);
+}
+
+.scheduled {
+  background: var(--surface-alt);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}

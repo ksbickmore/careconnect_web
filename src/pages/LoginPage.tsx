@@ -36,7 +36,8 @@ export function LoginPage() {
 
   const guest = () => {
     continueAsGuest();
-    void navigate(routes.dashboard, { replace: true });
+    // Honor the guarded route the visitor originally asked for.
+    void navigate(redirect, { replace: true });
   };
 
   return (

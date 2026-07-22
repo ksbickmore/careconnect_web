@@ -7,14 +7,18 @@ import {
   Pill,
   Settings,
   TriangleAlert,
+  UserRound,
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Brand } from '@/components/Brand';
 import { LiveRegions } from '@/components/LiveRegions';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { routes } from '@/lib/routes';
+import { useApplySettings } from '@/lib/use-apply-settings';
 import { useAuthStore } from '@/stores/auth-store';
-import { useDashboardStore } from '@/stores/dashboard-store';
+import { useMedicationsStore } from '@/stores/medications-store';
+import { useMessagesStore } from '@/stores/messages-store';
 import styles from './AppShell.module.css';
 
 const primaryItems = [
@@ -26,12 +30,13 @@ const primaryItems = [
 ] as const;
 
 export function AppShell() {
+  useApplySettings();
   const location = useLocation();
   const navigate = useNavigate();
   const email = useAuthStore((state) => state.email);
   const signOut = useAuthStore((state) => state.signOut);
-  const medications = useDashboardStore((state) => state.medications);
-  const conversations = useDashboardStore((state) => state.conversations);
+  const medications = useMedicationsStore((state) => state.medications);
+  const conversations = useMessagesStore((state) => state.conversations);
   const remaining = medications.filter((medication) => medication.status !== 'taken').length;
   const unread = conversations.filter((conversation) => conversation.unread).length;
   const userName = email ? email.split('@')[0] : 'Guest';
@@ -51,13 +56,23 @@ export function AppShell() {
       <a className={styles.skipLink} href="#main-content">
         Skip to main content
       </a>
+      <div className={styles.offlineArea}>
+        <OfflineBanner />
+      </div>
 
       <header className={styles.banner}>
         <NavLink to={routes.dashboard} className={styles.brandLink}>
           <Brand compact />
         </NavLink>
         <div className={styles.account}>
-          <span className={styles.accountName}>{userName}</span>
+          <NavLink
+            to={routes.profile}
+            className={styles.accountName}
+            aria-label={`Profile: ${userName}`}
+          >
+            <UserRound size={18} aria-hidden="true" />
+            <span>{userName}</span>
+          </NavLink>
           <button type="button" className={styles.signOut} onClick={leave}>
             <LogOut size={18} aria-hidden="true" />
             <span>Sign out</span>

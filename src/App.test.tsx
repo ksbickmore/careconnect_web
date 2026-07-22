@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { App } from './App';
 import { routes } from '@/lib/routes';
 import { useAuthStore } from '@/stores/auth-store';
-import { useDashboardStore } from '@/stores/dashboard-store';
+import { useMedicationsStore } from '@/stores/medications-store';
 
 const renderAt = (path: string) =>
   render(
@@ -62,7 +62,7 @@ describe('CareConnect routes and accessibility foundation', () => {
 
   it('requires two activations before persisting a medication as taken', async () => {
     const user = userEvent.setup();
-    useDashboardStore.getState().resetDemoData();
+    useMedicationsStore.getState().resetDemoData();
     renderAt(routes.login);
     await user.click(screen.getByRole('button', { name: 'Continue as guest' }));
 
@@ -70,10 +70,10 @@ describe('CareConnect routes and accessibility foundation', () => {
     await user.click(confirm);
     expect(confirm).toHaveTextContent('Tap again to confirm');
     expect(confirm).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('1/3')).toBeInTheDocument();
+    expect(screen.getByText('1/4')).toBeInTheDocument();
 
     await user.click(confirm);
-    expect(screen.getByText('2/3')).toBeInTheDocument();
+    expect(screen.getByText('2/4')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('logged as taken');
   });
 
@@ -87,6 +87,13 @@ describe('CareConnect routes and accessibility foundation', () => {
       'Enter both an email address and password.',
     );
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+  });
+
+  it('renders the not-found page for unknown routes', () => {
+    renderAt('/does-not-exist');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      "We couldn't find that page.",
+    );
   });
 
   it('has no automated axe violations on the public landing page', async () => {

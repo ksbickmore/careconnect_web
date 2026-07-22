@@ -4,8 +4,11 @@ import { TwoStepConfirm } from '@/components/TwoStepConfirm';
 import { routes } from '@/lib/routes';
 import { usePageMeta } from '@/lib/use-page-meta';
 import { useAnnouncerStore } from '@/stores/announcer-store';
+import { useAppointmentsStore } from '@/stores/appointments-store';
 import { useAuthStore } from '@/stores/auth-store';
-import { useDashboardStore } from '@/stores/dashboard-store';
+import { useHealthLogStore } from '@/stores/health-log-store';
+import { useMedicationsStore } from '@/stores/medications-store';
+import { useMessagesStore } from '@/stores/messages-store';
 import styles from './pages.module.css';
 
 const timeLabel = (timestamp: number) =>
@@ -18,12 +21,21 @@ export function DashboardPage() {
     noIndex: true,
   });
   const email = useAuthStore((state) => state.email);
-  const medications = useDashboardStore((state) => state.medications);
-  const appointments = useDashboardStore((state) => state.appointments);
-  const conversations = useDashboardStore((state) => state.conversations);
-  const health = useDashboardStore((state) => state.health);
-  const markMedicationTaken = useDashboardStore((state) => state.markMedicationTaken);
+  const medications = useMedicationsStore((state) => state.medications);
+  const markMedicationTaken = useMedicationsStore((state) => state.markTaken);
+  const allAppointments = useAppointmentsStore((state) => state.appointments);
+  const conversations = useMessagesStore((state) => state.conversations);
+  const entries = useHealthLogStore((state) => state.entries);
   const announce = useAnnouncerStore((state) => state.announce);
+
+  // Derived dashboard summaries (single source of truth: the entity stores).
+  const appointments = [...allAppointments].sort((a, b) => a.when - b.when).slice(0, 2);
+  const latestEntry = entries[0];
+  const health = {
+    painLevel: latestEntry?.painLevel ?? 0,
+    sleepHours: latestEntry?.sleepHours ?? 0,
+    lastLoggedLabel: latestEntry?.date ?? 'Not yet',
+  };
   const takenCount = medications.filter((medication) => medication.status === 'taken').length;
   const nextMedication =
     medications.find((medication) => medication.status === 'dueSoon') ??
@@ -170,7 +182,7 @@ export function DashboardPage() {
               <li key={conversation.id} className={conversation.unread ? styles.unreadRow : ''}>
                 <span>
                   <strong>{conversation.contactName}</strong>
-                  <small>{conversation.preview}</small>
+                  <small>{conversation.messages.at(-1)?.body}</small>
                 </span>
                 {conversation.unread && <span className={styles.unreadDot}>Unread</span>}
               </li>

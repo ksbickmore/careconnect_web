@@ -5,24 +5,40 @@ and Expo applications. The desktop app is the functional source of truth, the
 Expo app guides narrow-screen behavior, and the local `.figma` exports guide
 the visual system.
 
-This first milestone includes a public landing page, demo sign-in, a responsive
-authenticated shell, a functional dashboard, local demo data, and route
-foundations for the remaining care features.
+The app is a complete, installable Progressive Web App: all nine views are
+functional, work offline, and are fully keyboard accessible. Data is stored
+only on the device — there is no server.
+
+Live site: <https://careconnect-web-tau.vercel.app/>
 
 ## Current Features
 
 - Public landing page and accessible sign-in form.
 - Prefilled demo credentials and guest access; no server or real account is
-  required.
+  required. Guarded routes are preserved through sign-in.
 - Responsive desktop/tablet sidebar and mobile bottom navigation.
-- Dashboard summaries for medications, pain, sleep, schedule, and messages.
-- Two-step medication confirmation that persists in localStorage.
-- Protected route placeholders for Medications, Schedule, Messages, Health Log,
-  Emergency Help, Profile, and Settings.
-- Semantic landmarks, route focus management, live announcements, reduced
-  motion support, and keyboard-visible focus styles.
-- PWA manifest and app icons. Offline caching and service-worker registration
-  are intentionally deferred to a later milestone.
+- Dashboard summaries derived live from the medication, schedule, message, and
+  health-log stores.
+- **Medications** — master–detail list with Today/Completed groups, All/Due/
+  Taken filter tabs, arrow-key list navigation, two-step "Confirm taken",
+  snooze, and an add-medication dialog.
+- **Schedule** — Day/Week/Month calendar views (Month is a real `<table>`),
+  appointment detail dialog with two-step "Set reminder", and a
+  new-appointment dialog with native date/time inputs.
+- **Messages** — split-pane care-team chat that collapses to a drill-in
+  single pane on mobile, with focus management on pane changes.
+- **Health Log** — large `[−] value [+]` step controls for pain and sleep
+  (no sliders or typing required), mood chips, paginated history, and
+  plain-text export.
+- **Emergency** — oversized 911 and caregiver targets, each guarded by a
+  two-step confirm plus a cancellable countdown (`role="alertdialog"`).
+- **Profile** and **Settings** — account overview, care team, persisted text
+  size (100/115/130%), reduce motion, and a demo-data reset.
+- Semantic landmarks, route focus management, live announcements, focus-trapped
+  dialogs, reduced motion support, and keyboard-visible focus styles. See
+  [docs/accessibility.md](docs/accessibility.md) for the full documentation.
+- Installable PWA: service worker with a precached app shell, offline support,
+  an update prompt on new deployments, and an offline banner.
 
 ## Requirements
 
@@ -48,8 +64,8 @@ Email: demo@careconnect.app
 Password: demo1234
 ```
 
-Any non-empty email and password work in this local-only milestone. Passwords
-are never saved. Select **Continue as guest** to open the dashboard without an
+Any non-empty email and password work in this local-only demo. Passwords are
+never saved. Select **Continue as guest** to open the dashboard without an
 email address.
 
 ## Commands
@@ -57,14 +73,33 @@ email address.
 ```powershell
 npm run clean        # Remove generated build, test, and tool outputs
 npm run dev          # Start the local development server
-npm run build        # Type-check and create a production build
+npm run build        # Type-check and create a production build (includes the service worker)
 npm run preview      # Preview the production build locally
 npm run typecheck    # Run TypeScript checks
 npm run lint         # Run code and accessibility lint rules
-npm test             # Run component, data, route, and axe checks
-npm run test:coverage
+npm test             # Jest: unit, component, and axe checks
+npm run test:coverage # Jest with coverage (75% global thresholds enforced)
+npm run e2e          # Playwright end-to-end tests (builds and previews first)
+npm run e2e:ui       # Playwright interactive UI mode
 npm run icons        # Regenerate PNG app icons from the source SVG
 ```
+
+## Testing
+
+Three layers, per the project requirements:
+
+| Layer | Tool | Where |
+| --- | --- | --- |
+| Unit | Jest | `src/data/*.test.ts`, `src/lib/*.test.ts(x)` |
+| Component | Jest + React Testing Library | `src/components/*.test.tsx`, `src/pages/*.test.tsx`, `src/App.test.tsx` |
+| End-to-end | Playwright (Desktop Chrome + Pixel 7 profiles) | `e2e/*.spec.ts` |
+
+- Coverage thresholds (75% lines/branches/functions/statements) are enforced in
+  `jest.config.mjs`; the suite currently sits well above them.
+- Every page has an automated axe accessibility check.
+- The Playwright suite runs against the production build (`vite preview`) so
+  the offline/service-worker spec exercises the real PWA, and includes pure
+  keyboard-only journeys.
 
 ## Routes
 
@@ -72,27 +107,30 @@ npm run icons        # Regenerate PNG app icons from the source SVG
 | --- | --- |
 | `/` | Public landing page |
 | `/login` | Demo sign-in and guest access |
-| `/dashboard` | Functional responsive dashboard |
-| `/medications` | Routed placeholder |
-| `/schedule` | Routed placeholder |
-| `/messages` | Routed placeholder |
-| `/health-log` | Routed placeholder |
-| `/emergency` | Routed placeholder |
-| `/profile` | Routed placeholder |
-| `/settings` | Routed placeholder |
+| `/dashboard` | Daily overview derived from all stores |
+| `/medications` | Medication list, filters, dose logging, add dialog |
+| `/schedule` | Day/Week/Month calendar and appointment dialogs |
+| `/messages` | Split-pane care-team chat |
+| `/health-log` | Step-control entry form, history, export |
+| `/emergency` | Two-step guarded emergency calling (simulated) |
+| `/profile` | Account, care team, preferences link, sign out |
+| `/settings` | Text size, reduce motion, demo-data reset |
 
-Authenticated routes redirect signed-out visitors to `/login`. The app uses
-`BrowserRouter`, so a future public web server must rewrite unknown application
-paths to `index.html`.
+Authenticated routes redirect signed-out visitors to `/login` and return them
+to the requested page after sign-in. The app uses `BrowserRouter`; on Vercel,
+`vercel.json` rewrites unknown paths to `index.html`.
 
 ## Demo Data
 
-Dashboard data is seeded locally and medication confirmations are stored under
-the `careconnect:web:v1:dashboard` localStorage key. To restore the original
-demo data, run this in the browser console and reload:
+All feature data is seeded locally and persisted under `careconnect:web:v1:*`
+localStorage keys (medications, appointments, health-log, messages, settings).
+Use **Settings → Reset demo data** to restore the original examples, or clear
+the keys manually:
 
 ```javascript
-localStorage.removeItem('careconnect:web:v1:dashboard');
+Object.keys(localStorage)
+  .filter((key) => key.startsWith('careconnect:web:v1:'))
+  .forEach((key) => localStorage.removeItem(key));
 location.reload();
 ```
 
@@ -100,13 +138,39 @@ No data is sent over the network.
 
 ## Accessibility
 
-CareConnect targets WCAG 2.1 AA. Current checks cover landmarks, headings,
+CareConnect targets WCAG 2.1 AA. Automated checks cover landmarks, headings,
 labels, navigation state, route focus, live regions, two-step confirmations,
-keyboard operation, reduced motion, and automated axe rules. 
+keyboard operation, reduced motion, and axe rules on every page.
 
-## PWA Status
+Full documentation — semantic HTML inventory, keyboard map, ARIA inventory,
+and focus-management behavior — lives in
+[docs/accessibility.md](docs/accessibility.md).
 
-`manifest.webmanifest`, theme metadata, Apple mobile metadata, and 192px,
-512px, and maskable icons are present. A service worker, offline data cache,
-background sync, install prompt, and push notifications are not implemented
-yet.
+## PWA
+
+- `manifest.webmanifest`, theme metadata, Apple mobile metadata, and 192px,
+  512px, and maskable icons.
+- Service worker generated by `vite-plugin-pwa` (Workbox `generateSW`): the
+  app shell and all static assets are precached, and SPA navigations fall back
+  to the cached `index.html`, so every view works offline.
+- Updates use `registerType: 'prompt'`: when a new deployment is available, a
+  banner offers **Reload now** (see `src/components/ReloadPrompt.tsx`).
+- An offline banner (`src/components/OfflineBanner.tsx`) announces connectivity
+  changes; all data is on-device, so nothing is ever stale.
+- `vercel.json` serves `sw.js` with `max-age=0, must-revalidate` so deployments
+  are picked up promptly, and rewrites deep links to `index.html`.
+- When a real backend is added, the service worker strategy should move to
+  Workbox `injectManifest` with the network-first API caching described in
+  `web_app_plans_patterns.md`.
+
+## Voice Readiness
+
+Voice features (the desktop app's Whisper engine and voice command bar) are
+out of scope for this milestone. The architecture keeps the door open:
+
+- `src/lib/speech/speech.ts` defines the `SpeechService` seam a future engine
+  implements (Web Speech API or the desktop Whisper/WASM engine).
+- All actions are announced through the `announcer-store` live regions, which
+  a text-to-speech layer can subscribe to.
+- Every interactive control is reachable by name, which a voice-command
+  registry can target.

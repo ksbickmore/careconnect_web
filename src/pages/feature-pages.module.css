@@ -1,0 +1,794 @@
+/* Shared layout for the feature pages (Medications, Schedule, Messages,
+   Health Log, Emergency, Profile, Settings). Follows the conventions of
+   pages.module.css and tokens.css. */
+
+.page {
+  width: min(100%, 1320px);
+  margin: 0 auto;
+  padding: 34px 32px 48px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 22px;
+}
+
+.pageHeader h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(2rem, 3vw, 2.65rem);
+  letter-spacing: -1.3px;
+}
+
+.pageSub {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--teal-700);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.25px;
+}
+
+/* --- Buttons --- */
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.primaryButton {
+  border: 2px solid var(--teal-600);
+  background: var(--teal-600);
+  color: white;
+}
+
+.primaryButton:hover:not(:disabled) {
+  border-color: var(--teal-800);
+  background: var(--teal-800);
+}
+
+.primaryButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  border: 2px solid var(--teal-600);
+  background: white;
+  color: var(--teal-700);
+}
+
+.secondaryButton:hover {
+  background: var(--teal-50);
+}
+
+/* --- Cards & sections --- */
+
+.card {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: white;
+}
+
+.card + .card {
+  margin-top: 18px;
+}
+
+.card h2 {
+  margin: 0 0 16px;
+  font-size: 20px;
+}
+
+.cardNote {
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+.listSection {
+  margin-top: 22px;
+}
+
+.listSection h2 {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.emptyMessage {
+  margin: 18px 0;
+  color: var(--muted);
+}
+
+/* --- Item lists (medications, appointments, conversations) --- */
+
+.itemList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: white;
+  text-align: left;
+}
+
+.listItem:hover {
+  border-color: var(--teal-400);
+  background: var(--surface-alt);
+}
+
+.listItemActive {
+  border-color: var(--teal-600);
+  background: var(--teal-50);
+}
+
+.listItemBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.listItemBody strong,
+.listItemBody small {
+  display: block;
+}
+
+.listItemBody small {
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Split layout (list + detail panel) --- */
+
+.splitLayout {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 18px;
+  align-items: start;
+  margin-top: 8px;
+}
+
+.detailPanel {
+  position: sticky;
+  top: 18px;
+  padding: 24px;
+  border: 1px solid var(--teal-100);
+  border-radius: var(--radius-lg);
+  background: var(--teal-50);
+}
+
+.detailHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detailHead h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.detailMeta {
+  margin: 6px 0 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.detailList {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.detailList div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.detailList dt {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.detailList dd {
+  margin: 0;
+  text-align: right;
+}
+
+.detailActions {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.detailDone {
+  margin: 12px 0 0;
+  color: var(--teal-800);
+  font-weight: 700;
+}
+
+/* --- Forms --- */
+
+.formGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 7px;
+  font-weight: 700;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid #9d9b94;
+  border-radius: var(--radius-sm);
+  background: white;
+  color: var(--text);
+}
+
+.field textarea {
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+.formError {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--emergency-bg);
+  color: #9f2525;
+  font-weight: 600;
+}
+
+.fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.fieldset legend {
+  margin-bottom: 10px;
+  padding: 0;
+  font-weight: 700;
+}
+
+.radioRow,
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.radioRow:hover,
+.checkboxRow:hover {
+  background: var(--surface-alt);
+}
+
+.radioRow input,
+.checkboxRow input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--teal-600);
+}
+
+.optionText {
+  display: block;
+  font-weight: 700;
+}
+
+.optionText small {
+  display: block;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.checkboxRow {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  padding-top: 18px;
+}
+
+/* --- Chips (mood) --- */
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--teal-400);
+}
+
+.chipActive {
+  border-color: var(--teal-600);
+  background: var(--teal-50);
+  color: var(--teal-800);
+}
+
+.chip:focus-within {
+  outline: 3px solid var(--amber-600);
+  outline-offset: 3px;
+}
+
+/* --- Health log history --- */
+
+.historyEntry {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+}
+
+.historyEntry header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.moodChip {
+  padding: 2px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--teal-50);
+  color: var(--teal-800);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.historyStats {
+  margin: 6px 0 0;
+  font-weight: 700;
+}
+
+.historyNote {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+/* --- Messages --- */
+
+.messagesLayout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) 1.4fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.convoPane,
+.threadPane {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: white;
+}
+
+.convoPane h2,
+.threadPane h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 50%;
+  background: var(--teal-100);
+  color: var(--teal-900);
+  font-weight: 800;
+}
+
+.avatarLarge {
+  width: 64px;
+  height: 64px;
+  flex-basis: 64px;
+  font-size: 20px;
+}
+
+.unreadBadge {
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--teal-600);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.threadHead h2 {
+  margin: 8px 0 0;
+  font-size: 22px;
+}
+
+.threadHead p {
+  margin-top: 2px;
+}
+
+.backButton {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--teal-700);
+  font-weight: 700;
+}
+
+.bubbleList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bubble {
+  justify-self: start;
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 14px 14px 14px 4px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+
+.bubbleMine {
+  justify-self: end;
+  border-radius: 14px 14px 4px 14px;
+  border-color: var(--teal-100);
+  background: var(--teal-50);
+}
+
+.bubble p {
+  margin: 0;
+}
+
+.bubble small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.composer {
+  display: flex;
+  gap: 10px;
+}
+
+.composer input {
+  flex: 1;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid #9d9b94;
+  border-radius: var(--radius-md);
+  background: white;
+  color: var(--text);
+}
+
+/* --- Emergency --- */
+
+.sosGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.sosCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 24px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: white;
+  text-align: center;
+}
+
+.sosCard h2 {
+  margin: 6px 0 0;
+  font-size: 24px;
+}
+
+.sosCard p {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.sos911 {
+  border-color: var(--emergency);
+  background: var(--emergency-bg);
+  color: var(--emergency);
+}
+
+.sos911 h2,
+.sos911 p {
+  color: inherit;
+}
+
+.sos911 p {
+  opacity: 0.8;
+}
+
+.connectedCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 18px 20px;
+  border: 2px solid var(--teal-400);
+  border-radius: var(--radius-lg);
+  background: var(--teal-50);
+  color: var(--teal-800);
+}
+
+.connectedCard p {
+  flex: 1;
+  margin: 0;
+}
+
+/* --- Contacts --- */
+
+.contactList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contactList li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+}
+
+.contactList strong,
+.contactList small {
+  display: block;
+}
+
+.contactList small {
+  color: var(--muted);
+}
+
+.contactList li > span:nth-child(2) {
+  flex: 1;
+}
+
+/* --- Month calendar --- */
+
+.monthTable {
+  width: 100%;
+  margin-top: 18px;
+  border-collapse: collapse;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.monthTable caption {
+  padding: 14px;
+  background: white;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.monthTable th {
+  padding: 10px 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.monthTable td {
+  width: 14.28%;
+  min-height: 84px;
+  height: 84px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.monthDay {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.monthToday {
+  background: var(--teal-50);
+}
+
+.monthToday .monthDay {
+  color: var(--teal-800);
+}
+
+.monthEmpty {
+  background: var(--surface-alt);
+}
+
+.monthEvent {
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  margin-top: 2px;
+  padding: 4px 6px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--teal-600);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monthEvent:hover {
+  background: var(--teal-800);
+}
+
+/* --- Responsive --- */
+
+@media (max-width: 980px) {
+  .splitLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .detailPanel {
+    position: static;
+  }
+
+  .sosGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding: 26px 16px 34px;
+  }
+
+  .pageHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pageHeader h1 {
+    font-size: 30px;
+  }
+
+  /* Messages: single pane with drill-in. */
+  .messagesLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .messagesLayout .threadPane {
+    display: none;
+  }
+
+  .threadOpen .threadPane {
+    display: block;
+  }
+
+  .threadOpen .convoPane {
+    display: none;
+  }
+
+  .backButton {
+    display: inline-flex;
+  }
+
+  .monthTable td {
+    height: 64px;
+  }
+
+  .monthEvent {
+    padding: 3px 4px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 560px) {
+  .fieldRow {
+    grid-template-columns: 1fr;
+  }
+
+  .composer {
+    flex-direction: column;
+  }
+
+  .monthTable {
+    font-size: 12px;
+  }
+}

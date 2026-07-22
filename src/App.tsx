@@ -1,20 +1,18 @@
-import {
-  CalendarDays,
-  HeartPulse,
-  MessageSquare,
-  Pill,
-  Settings,
-  TriangleAlert,
-  UserRound,
-} from 'lucide-react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { ReloadPrompt } from '@/components/ReloadPrompt';
 import { AppShell } from '@/layout/AppShell';
 import { routes } from '@/lib/routes';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { EmergencyPage } from '@/pages/EmergencyPage';
+import { HealthLogPage } from '@/pages/HealthLogPage';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
+import { MedicationsPage } from '@/pages/MedicationsPage';
+import { MessagesPage } from '@/pages/MessagesPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
-import { PlaceholderPage } from '@/pages/PlaceholderPage';
+import { ProfilePage } from '@/pages/ProfilePage';
+import { SchedulePage } from '@/pages/SchedulePage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { useAuthStore } from '@/stores/auth-store';
 
 function RequireAuth() {
@@ -25,83 +23,24 @@ function RequireAuth() {
 
 export function App() {
   return (
-    <Routes>
+    <>
+      {/* Registers the service worker on every page, incl. the public ones. */}
+      <ReloadPrompt />
+      <Routes>
       <Route path={routes.landing} element={<LandingPage />} />
       <Route path={routes.login} element={<LoginPage />} />
       <Route element={<RequireAuth />}>
         <Route path={routes.dashboard} element={<DashboardPage />} />
-        <Route
-          path={routes.medications}
-          element={
-            <PlaceholderPage
-              title="Medications"
-              description="Medication lists, detail panels, filters, and dose logging will live here."
-              icon={Pill}
-            />
-          }
-        />
-        <Route
-          path={routes.schedule}
-          element={
-            <PlaceholderPage
-              title="Schedule"
-              description="Daily, weekly, and monthly appointment views will live here."
-              icon={CalendarDays}
-            />
-          }
-        />
-        <Route
-          path={routes.messages}
-          element={
-            <PlaceholderPage
-              title="Messages"
-              description="Care-team conversations and accessible message composition will live here."
-              icon={MessageSquare}
-            />
-          }
-        />
-        <Route
-          path={routes.healthLog}
-          element={
-            <PlaceholderPage
-              title="Health Log"
-              description="Pain, sleep, mood, and symptom history controls will live here."
-              icon={HeartPulse}
-            />
-          }
-        />
-        <Route
-          path={routes.emergency}
-          element={
-            <PlaceholderPage
-              title="Emergency Help"
-              description="Two-step emergency contacts and cancellation safeguards will live here."
-              icon={TriangleAlert}
-            />
-          }
-        />
-        <Route
-          path={routes.profile}
-          element={
-            <PlaceholderPage
-              title="Profile"
-              description="Patient and care-plan information will live here."
-              icon={UserRound}
-            />
-          }
-        />
-        <Route
-          path={routes.settings}
-          element={
-            <PlaceholderPage
-              title="Settings"
-              description="Text size, motion, and future voice preferences will live here."
-              icon={Settings}
-            />
-          }
-        />
+        <Route path={routes.medications} element={<MedicationsPage />} />
+        <Route path={routes.schedule} element={<SchedulePage />} />
+        <Route path={routes.messages} element={<MessagesPage />} />
+        <Route path={routes.healthLog} element={<HealthLogPage />} />
+        <Route path={routes.emergency} element={<EmergencyPage />} />
+        <Route path={routes.profile} element={<ProfilePage />} />
+        <Route path={routes.settings} element={<SettingsPage />} />
       </Route>
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </>
   );
 }

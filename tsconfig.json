@@ -16,7 +16,7 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "types": ["vite/client", "vitest/globals"],
+    "types": ["vite/client", "jest"],
     "paths": {
       "@/*": ["./src/*"]
     }
