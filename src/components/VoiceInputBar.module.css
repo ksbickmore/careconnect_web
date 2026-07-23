@@ -1,3 +1,67 @@
+/* "What can I say" panel, shown directly above the bar. */
+.help {
+  margin-bottom: 8px;
+  padding: 12px 16px;
+  background: var(--teal-900);
+  border-radius: var(--radius-md);
+  color: rgb(255 255 255 / 88%);
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.helpHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.helpHead h2 {
+  margin: 0;
+  font-size: 15px;
+  color: #fff;
+}
+
+.helpClose {
+  border: none;
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.helpClose:hover {
+  background: rgb(255 255 255 / 24%);
+}
+
+.helpGroup h3 {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgb(255 255 255 / 65%);
+}
+
+.helpGroup ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+
+.helpGroup li {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 10%);
+  font-size: 13px;
+}
+
 .bar {
   display: flex;
   align-items: center;

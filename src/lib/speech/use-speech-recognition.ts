@@ -10,7 +10,7 @@ import {
 export interface UseSpeechRecognition {
   /** True while a recognition session is active. */
   listening: boolean;
-  /** Latest (partial or final) transcript of the current session. */
+  /** Live partial transcript of the in-flight utterance ('' between them). */
   transcript: string;
   /** Human-readable error from the last session, if any. */
   error: string | null;
@@ -80,7 +80,10 @@ export function useSpeechRecognition(
         },
         onFinal: (text) => {
           setModelProgress(null);
-          setTranscript(text);
+          // Clear rather than keep the final text: between utterances the
+          // voice bar shows the command's feedback, which the lingering
+          // transcript would otherwise mask for the whole session.
+          setTranscript('');
           onFinalRef.current?.(text);
         },
         onError: (message) => setError(message),

@@ -24,8 +24,9 @@ working offline once the model is cached.
 - The **voice bar** sits at the bottom of every authenticated page.
 - Tap the mic (or press **Ctrl+Space** from anywhere) to start listening; tap
   again (or say **"stop listening"**) to stop.
-- Say **"what can I say"** at any time to hear the commands available on the
-  current page.
+- Say **"what can I say"** at any time to open a panel showing the commands
+  available right now (dialog, page, and global). Say **"close help"** or tap
+  its × to dismiss it.
 - Speaking while a text field is focused (in a dialog, or in the page — e.g.
   the messages composer) dictates into that field.
 - The first voice use on a device downloads the speech model (see below).
@@ -42,7 +43,10 @@ Global (available everywhere):
 | Say | Does |
 | --- | --- |
 | `stop listening` / `stop voice` | Ends the voice session |
-| `what can I say` / `help` | Reads out the currently available commands |
+| `what can I say` / `help` / `show help` | Opens an on-screen panel above the bar listing available commands, grouped most relevant first: the open dialog's, then the page's, then global |
+| `close help` / `hide help` | Closes the help panel (the panel's × button works too) |
+| `clear <field name>` | Empties the named text field (open dialog or page) and focuses it for re-dictation, e.g. "clear title" |
+| `clear` | Empties the focused text field |
 | `go to <page>` (also "open", "show") | Navigates: dashboard, medications, schedule, messages, health log, emergency, settings, profile |
 | *any visible button's name* | Clicks that button (dialog first, then main content) |
 
@@ -63,7 +67,7 @@ screen commands):
 
 | Dialog | Commands |
 | --- | --- |
-| Add medication | `name <text>`, `dose <text>`, `schedule <once daily / twice daily / as needed / nightly>`, `time <label>` (also `time label <label>`), `instructions <text>`, `save`, `cancel` |
+| Add medication | `name <text>`, `dose <text>`, `schedule <free text, e.g. twice daily>`, `time <label>` (also `time label <label>`), `instructions <text>`, `save`, `cancel` |
 | New appointment | `title <text>`, `clinician <name>` (also `doctor <name>`), `location <place>`, `date <spoken date>`, `time <spoken time>`, `save`, `cancel` |
 
 Spoken dates accept "today", "tomorrow", "next friday", "july 5", "the fifth
@@ -101,7 +105,10 @@ Whisper, so "Title Dental cleaning." fills the field with "Dental cleaning".
 4. No match: the bar shows `Heard: "…"` and suggests "what can I say".
 
 Feedback strings returned by command handlers are shown in the bar and
-announced through the assertive live region.
+announced through the live region. The bar shows the live partial
+transcript while an utterance is in flight and the last command's feedback
+between utterances (the recognition hook clears its transcript after each
+final result so feedback is never masked mid-session).
 
 ## Speech engine pipeline
 

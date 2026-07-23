@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import {
   dispatchVoiceCommand,
+  registeredHintGroups,
   registeredHints,
   useVoiceRegistryStore,
 } from './voice-registry';
@@ -48,6 +49,49 @@ describe('voice registry dispatch', () => {
       ],
     });
     expect(registeredHints()).toEqual(['snooze', 'name *']);
+  });
+
+  it('lists dialog hints first, then screen, then global', () => {
+    const store = useVoiceRegistryStore.getState();
+    store.register({
+      id: 'g',
+      kind: 'global',
+      commands: [{ phrases: ['help'], hint: 'help', run: jest.fn() }],
+    });
+    store.register({
+      id: 's',
+      kind: 'screen',
+      commands: [{ phrases: ['snooze'], hint: 'snooze', run: jest.fn() }],
+    });
+    store.register({
+      id: 'd',
+      kind: 'dialog',
+      commands: [{ phrases: ['save'], hint: 'save', run: jest.fn() }],
+    });
+    expect(registeredHints()).toEqual(['save', 'snooze', 'help']);
+  });
+
+  it('groups hints by scope kind, merging scopes of the same kind', () => {
+    const store = useVoiceRegistryStore.getState();
+    store.register({
+      id: 'g',
+      kind: 'global',
+      commands: [{ phrases: ['help'], hint: 'help', run: jest.fn() }],
+    });
+    store.register({
+      id: 's1',
+      kind: 'screen',
+      commands: [{ phrases: ['snooze'], hint: 'snooze', run: jest.fn() }],
+    });
+    store.register({
+      id: 's2',
+      kind: 'screen',
+      commands: [{ phrases: ['filter *'], hint: 'filter <x>', run: jest.fn() }],
+    });
+    expect(registeredHintGroups()).toEqual([
+      { kind: 'screen', hints: ['snooze', 'filter <x>'] },
+      { kind: 'global', hints: ['help'] },
+    ]);
   });
 });
 

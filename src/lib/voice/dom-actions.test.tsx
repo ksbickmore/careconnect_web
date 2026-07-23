@@ -1,10 +1,11 @@
 import { act, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import {
+  clearFieldByName,
+  clearFocusedField,
   clickButtonByName,
   dictateIntoFocusedField,
   openDialog,
-  selectOptionById,
 } from './dom-actions';
 
 afterEach(() => {
@@ -105,33 +106,50 @@ describe('dictateIntoFocusedField', () => {
   });
 });
 
-describe('selectOptionById', () => {
-  const selectHtml =
-    '<div role="dialog"><label for="s">Schedule</label>' +
-    '<select id="s"><option>Once daily</option><option>Twice daily</option>' +
-    '<option>As needed</option><option>Nightly</option></select></div>';
+describe('clearFieldByName', () => {
+  it('clears a dialog field matched by its label and focuses it', () => {
+    document.body.innerHTML =
+      '<div role="dialog"><label for="t">Title</label><input id="t" value="typo" />' +
+      '<label for="n">Notes</label><textarea id="n">keep me</textarea></div>';
+    const input = document.getElementById('t') as HTMLInputElement;
+    const onInput = jest.fn();
+    input.addEventListener('input', onInput);
 
-  it('selects an option by spoken label and fires change', () => {
-    document.body.innerHTML = selectHtml;
-    const select = document.getElementById('s') as HTMLSelectElement;
-    const onChange = jest.fn();
-    select.addEventListener('change', onChange);
-    expect(selectOptionById('s', 'twice daily')).toBe('Twice daily');
-    expect(select.value).toBe('Twice daily');
-    expect(onChange).toHaveBeenCalled();
+    expect(clearFieldByName('title')).toBe('Title');
+    expect(input.value).toBe('');
+    expect(document.activeElement).toBe(input);
+    expect(onInput).toHaveBeenCalled();
+    expect((document.getElementById('n') as HTMLTextAreaElement).value).toBe('keep me');
   });
 
-  it('matches loosely, ignoring case and punctuation', () => {
-    document.body.innerHTML = selectHtml;
-    expect(selectOptionById('s', 'As needed.')).toBe('As needed');
-    expect((document.getElementById('s') as HTMLSelectElement).value).toBe('As needed');
+  it('matches a partial spoken label in the main content', () => {
+    document.body.innerHTML =
+      '<main><label for="m">Message Dr. Park</label><input id="m" value="oops" /></main>';
+    expect(clearFieldByName('message')).toBe('Message Dr. Park');
+    expect((document.getElementById('m') as HTMLInputElement).value).toBe('');
   });
 
-  it('returns null for an unknown option or a non-select element', () => {
-    document.body.innerHTML = selectHtml + '<input id="i" />';
-    expect(selectOptionById('s', 'whenever I feel like it')).toBeNull();
-    expect(selectOptionById('i', 'once daily')).toBeNull();
-    expect(selectOptionById('missing', 'once daily')).toBeNull();
+  it('returns null for an unknown field name', () => {
+    document.body.innerHTML =
+      '<main><label for="m">Message</label><input id="m" value="x" /></main>';
+    expect(clearFieldByName('title')).toBeNull();
+    expect((document.getElementById('m') as HTMLInputElement).value).toBe('x');
+  });
+});
+
+describe('clearFocusedField', () => {
+  it('clears the focused text field and reports its label', () => {
+    document.body.innerHTML =
+      '<main><label for="m">Message</label><input id="m" value="typo" /></main>';
+    const input = document.getElementById('m') as HTMLInputElement;
+    input.focus();
+    expect(clearFocusedField()).toBe('Message');
+    expect(input.value).toBe('');
+  });
+
+  it('returns null when no text field is focused', () => {
+    document.body.innerHTML = '<main><button type="button">Save</button></main>';
+    expect(clearFocusedField()).toBeNull();
   });
 });
 

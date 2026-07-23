@@ -171,11 +171,11 @@ describe('MedicationsPage', () => {
     speak('add medication');
     const dialog = screen.getByRole('dialog', { name: 'Add medication' });
 
-    expect(speak('schedule twice daily').feedback).toBe('Schedule set to Twice daily.');
-    expect(within(dialog).getByLabelText('Schedule')).toHaveValue('Twice daily');
-    expect(speak('schedule whenever').feedback).toBe(
-      'Say "schedule" followed by once daily, twice daily, as needed, or nightly.',
+    // Schedule is free text so users can say whatever fits their routine.
+    expect(speak('schedule every other morning').feedback).toBe(
+      'Schedule set to every other morning.',
     );
+    expect(within(dialog).getByLabelText('Schedule')).toHaveValue('every other morning');
 
     expect(speak('time label 8 am daily').feedback).toBe('Time label set to 8 am daily.');
     expect(within(dialog).getByLabelText('Time label')).toHaveValue('8 am daily');

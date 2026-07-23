@@ -23,6 +23,22 @@ beforeEach(() => {
   });
 });
 
+describe('useSpeechRecognition transcript lifecycle', () => {
+  it('clears the transcript after a final utterance is delivered', async () => {
+    const onFinal = jest.fn();
+    const { result } = renderHook(() => useSpeechRecognition(onFinal));
+    await act(() => result.current.start());
+
+    act(() => callbacks!.onPartial!('open medi'));
+    expect(result.current.transcript).toBe('open medi');
+
+    act(() => callbacks!.onFinal!('open medications'));
+    expect(onFinal).toHaveBeenCalledWith('open medications');
+    // Cleared so the voice bar can show command feedback between utterances.
+    expect(result.current.transcript).toBe('');
+  });
+});
+
 describe('useSpeechRecognition model progress', () => {
   it('exposes model-load progress while the model downloads', async () => {
     const { result } = renderHook(() => useSpeechRecognition());

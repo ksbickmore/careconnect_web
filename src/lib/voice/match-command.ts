@@ -29,7 +29,7 @@ export interface VoiceMatch {
   readonly value?: string;
 }
 
-const KIND_PRIORITY: Record<VoiceScopeKind, number> = {
+export const KIND_PRIORITY: Record<VoiceScopeKind, number> = {
   global: 0,
   screen: 1,
   dialog: 2,

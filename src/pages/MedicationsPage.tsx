@@ -7,7 +7,7 @@ import { TwoStepConfirm } from '@/components/TwoStepConfirm';
 import { slugify } from '@/lib/format';
 import { useArrowList } from '@/lib/use-arrow-list';
 import { usePageMeta } from '@/lib/use-page-meta';
-import { fillFieldById, selectOptionById } from '@/lib/voice/dom-actions';
+import { fillFieldById } from '@/lib/voice/dom-actions';
 import { useVoiceCommands } from '@/lib/voice/use-voice-commands';
 import type { Medication } from '@/models/types';
 import { useAnnouncerStore } from '@/stores/announcer-store';
@@ -154,13 +154,11 @@ export function MedicationsPage() {
           },
           {
             phrases: ['schedule *'],
-            hint: 'schedule <once daily, twice daily, as needed, nightly>',
-            run: (value = '') => {
-              const label = selectOptionById('med-schedule', value);
-              return label
-                ? `Schedule set to ${label}.`
-                : 'Say "schedule" followed by once daily, twice daily, as needed, or nightly.';
-            },
+            hint: 'schedule <e.g. twice daily>',
+            run: (value = '') =>
+              fillFieldById('med-schedule', value)
+                ? `Schedule set to ${value}.`
+                : 'Could not find the schedule field.',
           },
           {
             phrases: ['time *', 'time label *'],
@@ -204,7 +202,7 @@ export function MedicationsPage() {
     const data = new FormData(event.currentTarget);
     const name = String(data.get('name') ?? '').trim();
     const dose = String(data.get('dose') ?? '').trim();
-    const schedule = String(data.get('schedule') ?? 'Once daily');
+    const schedule = String(data.get('schedule') ?? '').trim() || 'Once daily';
     const timeLabel = String(data.get('timeLabel') ?? '').trim() || 'Anytime';
     const instructions = String(data.get('instructions') ?? '').trim();
 
@@ -415,12 +413,13 @@ export function MedicationsPage() {
             </div>
             <div className={styles.field}>
               <label htmlFor="med-schedule">Schedule</label>
-              <select id="med-schedule" name="schedule" defaultValue="Once daily">
-                <option>Once daily</option>
-                <option>Twice daily</option>
-                <option>As needed</option>
-                <option>Nightly</option>
-              </select>
+              <input
+                id="med-schedule"
+                name="schedule"
+                type="text"
+                autoComplete="off"
+                placeholder="e.g. Twice daily, as needed"
+              />
             </div>
             <div className={styles.field}>
               <label htmlFor="med-time">Time label</label>

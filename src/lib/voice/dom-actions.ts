@@ -58,32 +58,46 @@ function setNativeValue(el: HTMLInputElement | HTMLTextAreaElement, value: strin
   el.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
+const TEXT_TYPES = new Set(['text', 'search', 'email', 'tel', 'url', '']);
+
+const isTextField = (
+  el: Element | null,
+): el is HTMLInputElement | HTMLTextAreaElement =>
+  (el instanceof HTMLInputElement && TEXT_TYPES.has(el.type)) ||
+  el instanceof HTMLTextAreaElement;
+
 /**
- * Pick a `<select>` option by its spoken label (voice dialog commands like
- * "schedule *"). Loose match: case/punctuation ignored, and a partial spoken
- * value ("daily") matches the first option containing it. Returns the chosen
- * option's label, or null if the element or option was not found.
+ * Empty a text field matched by its spoken label ("clear title"), scoped to
+ * the open dialog or main content. Focuses the field so the user can dictate
+ * a replacement. Returns the label, or null if no such field exists.
  */
-export function selectOptionById(id: string, spoken: string): string | null {
-  const el = document.getElementById(id);
-  if (!(el instanceof HTMLSelectElement)) return null;
+export function clearFieldByName(spoken: string): string | null {
   const target = normalize(spoken);
   if (!target) return null;
-  for (const option of el.options) {
-    const label = normalize(option.textContent ?? option.value);
-    if (label === target || label.includes(target) || target.includes(label)) {
-      // Native setter so a controlled React select sees the change too.
-      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!
-        .set!.call(el, option.value);
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-      return option.textContent?.trim() ?? option.value;
-    }
+  const root = openDialog() ?? document.querySelector<HTMLElement>('main');
+  if (!root) return null;
+  for (const label of root.querySelectorAll('label')) {
+    const name = normalize(label.textContent ?? '');
+    if (!name || (name !== target && !name.includes(target))) continue;
+    const el = label.htmlFor ? document.getElementById(label.htmlFor) : null;
+    if (!isTextField(el)) continue;
+    setNativeValue(el, '');
+    el.focus();
+    return label.textContent!.trim();
   }
   return null;
 }
 
-const TEXT_TYPES = new Set(['text', 'search', 'email', 'tel', 'url', '']);
+/** Empty the focused text field ("clear"). Returns its label, or null. */
+export function clearFocusedField(): string | null {
+  const el = document.activeElement;
+  if (!isTextField(el)) return null;
+  setNativeValue(el, '');
+  const label = el.id
+    ? document.querySelector<HTMLLabelElement>(`label[for="${el.id}"]`)?.textContent
+    : null;
+  return label?.trim() ?? 'field';
+}
 
 export function dictateIntoFocusedField(text: string): string | null {
   // Open dialog first; otherwise the main content (e.g. the messages
@@ -91,10 +105,7 @@ export function dictateIntoFocusedField(text: string): string | null {
   const root = openDialog() ?? document.querySelector<HTMLElement>('main');
   if (!root) return null;
   const el = document.activeElement;
-  const isText =
-    (el instanceof HTMLInputElement && TEXT_TYPES.has(el.type)) ||
-    el instanceof HTMLTextAreaElement;
-  if (!isText || !root.contains(el)) return null;
+  if (!isTextField(el) || !root.contains(el)) return null;
   // Search boxes match on words; Whisper's sentence punctuation ("Aspirin.")
   // would poison the query. Notes and message drafts keep it.
   const spoken =

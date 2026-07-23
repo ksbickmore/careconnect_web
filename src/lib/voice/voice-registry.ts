@@ -1,5 +1,10 @@
 import { create } from 'zustand';
-import { matchCommand, type VoiceScope } from './match-command';
+import {
+  KIND_PRIORITY,
+  matchCommand,
+  type VoiceScope,
+  type VoiceScopeKind,
+} from './match-command';
 
 /**
  * App-wide registry of voice command scopes. Screens and dialogs register
@@ -32,9 +37,36 @@ export function dispatchVoiceCommand(transcript: string): DispatchResult {
   return { handled: true, feedback: feedback ?? undefined };
 }
 
-/** Hints for "what can I say", in registration order. */
+export interface HintGroup {
+  kind: VoiceScopeKind;
+  hints: string[];
+}
+
+/**
+ * Hints for "what can I say", grouped by scope kind and most relevant
+ * first: open-dialog commands, then the current page's, then global ones
+ * (registration order within each kind; same-kind scopes merged). Pure so
+ * components can pass a subscribed `scopes` snapshot and stay reactive.
+ */
+export function hintGroups(scopes: readonly VoiceScope[]): HintGroup[] {
+  const ordered = [...scopes].sort(
+    (a, b) => KIND_PRIORITY[b.kind] - KIND_PRIORITY[a.kind],
+  );
+  const groups: HintGroup[] = [];
+  for (const s of ordered) {
+    const hints = s.commands.map((c) => c.hint ?? c.phrases[0]);
+    const existing = groups.find((g) => g.kind === s.kind);
+    if (existing) existing.hints.push(...hints);
+    else groups.push({ kind: s.kind, hints });
+  }
+  return groups;
+}
+
+export function registeredHintGroups(): HintGroup[] {
+  return hintGroups(useVoiceRegistryStore.getState().scopes);
+}
+
+/** Flat hint list, same relevance order as `registeredHintGroups`. */
 export function registeredHints(): string[] {
-  return useVoiceRegistryStore
-    .getState()
-    .scopes.flatMap((s) => s.commands.map((c) => c.hint ?? c.phrases[0]));
+  return registeredHintGroups().flatMap((g) => g.hints);
 }

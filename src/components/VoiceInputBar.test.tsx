@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { VoiceInputBar } from './VoiceInputBar';
@@ -286,7 +286,103 @@ describe('VoiceInputBar', () => {
     });
   });
 
+  describe('feedback visibility while listening', () => {
+    it('shows command feedback in the bar during a continuous session', () => {
+      mockSpeech({ listening: true, transcript: '' });
+      renderBar();
+      useVoiceRegistryStore.getState().register({
+        id: 'test-screen',
+        kind: 'screen',
+        commands: [{ phrases: ['take medication'], run: () => 'Medication logged.' }],
+      });
+
+      speak('take medication');
+      expect(screen.getByText('Medication logged.')).toBeInTheDocument();
+    });
+
+    it('prefers the live transcript over stale feedback', () => {
+      mockSpeech({ listening: true, transcript: 'open medi' });
+      renderBar();
+      expect(screen.getByText('open medi')).toBeInTheDocument();
+    });
+  });
+
+  describe('help panel', () => {
+    it('"what can I say" opens a visible panel listing commands', () => {
+      renderBar();
+      useVoiceRegistryStore.getState().register({
+        id: 'test-screen',
+        kind: 'screen',
+        commands: [{ phrases: ['snooze'], hint: 'snooze', run: jest.fn() }],
+      });
+
+      speak('what can I say');
+      const panel = screen.getByRole('region', { name: 'Voice commands' });
+      expect(within(panel).getByText('snooze')).toBeInTheDocument();
+      expect(within(panel).getByText('stop listening')).toBeInTheDocument();
+      expect(within(panel).getByText('On this page')).toBeInTheDocument();
+      expect(within(panel).getByText('Anywhere')).toBeInTheDocument();
+    });
+
+    it('closes by voice and by the close button', async () => {
+      renderBar();
+      speak('what can I say');
+      expect(screen.getByRole('region', { name: 'Voice commands' })).toBeInTheDocument();
+
+      speak('close help');
+      expect(
+        screen.queryByRole('region', { name: 'Voice commands' }),
+      ).not.toBeInTheDocument();
+
+      speak('help');
+      await userEvent.click(screen.getByRole('button', { name: 'Close voice help' }));
+      expect(
+        screen.queryByRole('region', { name: 'Voice commands' }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   describe('global commands', () => {
+    it('"clear <field>" empties a dialog field by its label', () => {
+      renderBar();
+      render(
+        <div role="dialog" aria-label="Add">
+          <label htmlFor="med-name">Name</label>
+          <input id="med-name" type="text" defaultValue="Asprin typo" />
+        </div>,
+      );
+      speak('clear name');
+      expect(screen.getByLabelText('Name')).toHaveValue('');
+      expect(screen.getByText('Cleared Name.')).toBeInTheDocument();
+    });
+
+    it('"clear" empties the focused text field', () => {
+      renderBar();
+      render(
+        <main>
+          <label htmlFor="message-input">Message Dr. Park</label>
+          <input id="message-input" type="text" defaultValue="oops" />
+        </main>,
+      );
+      const input = screen.getByLabelText('Message Dr. Park');
+      input.focus();
+      speak('clear');
+      expect(input).toHaveValue('');
+      expect(screen.getByText('Cleared Message Dr. Park.')).toBeInTheDocument();
+    });
+
+    it('reports when there is nothing to clear', () => {
+      renderBar();
+      speak('clear');
+      expect(
+        screen.getByText('Focus a text field first, or say "clear" plus the field name.'),
+      ).toBeInTheDocument();
+      speak('clear dosage');
+      expect(
+        screen.getByText('Could not find a "dosage" field to clear.'),
+      ).toBeInTheDocument();
+    });
+
     it('"stop listening" ends the session', () => {
       mockSpeech({ listening: true });
       renderBar();
@@ -295,11 +391,12 @@ describe('VoiceInputBar', () => {
       expect(useAnnouncerStore.getState().polite).toBe('Voice commands off.');
     });
 
-    it('"what can I say" lists registered hints', () => {
+    it('"what can I say" announces that the help panel opened', () => {
       renderBar();
       speak('what can I say');
-      expect(useAnnouncerStore.getState().polite).toContain('stop listening');
-      expect(useAnnouncerStore.getState().polite).toContain('what can I say');
+      expect(useAnnouncerStore.getState().polite).toBe(
+        'Showing what you can say. Say "close help" when done.',
+      );
     });
   });
 
