@@ -40,8 +40,46 @@ interface PhraseMatch {
   value?: string;
 }
 
+/**
+ * Tokenized transcript that remembers which raw whitespace-separated word
+ * each token came from, so a wildcard tail can be rebuilt from the original
+ * text ("I'll be there." stays intact instead of becoming "I ll be there").
+ */
+interface SpokenText {
+  tokens: string[];
+  /** For each token, the index of the raw word it came from. */
+  source: number[];
+  raw: string[];
+}
+
+function readSpokenText(transcript: string): SpokenText {
+  const raw = transcript.split(/\s+/).filter(Boolean);
+  const tokens: string[] = [];
+  const source: number[] = [];
+  raw.forEach((word, wordIndex) => {
+    for (const token of tokenize(word)) {
+      tokens.push(token);
+      source.push(wordIndex);
+    }
+  });
+  return { tokens, source, raw };
+}
+
+/** Wildcard tail from the raw words, minus trailing sentence punctuation. */
+function tailValue(spoken: SpokenText, phraseWords: number): string {
+  const start = spoken.source[phraseWords];
+  // If the tail starts mid-raw-word (e.g. "name:Aspirin"), the raw word also
+  // contains phrase text — fall back to the plain token join.
+  const tail =
+    phraseWords > 0 && start === spoken.source[phraseWords - 1]
+      ? spoken.tokens.slice(phraseWords)
+      : spoken.raw.slice(start);
+  return tail.join(' ').replace(/[.,!?;:]+$/, '');
+}
+
 /** Match one phrase against the tokenized transcript; longest wins upstream. */
-function matchPhrase(phrase: string, tokens: string[]): PhraseMatch | null {
+function matchPhrase(phrase: string, spoken: SpokenText): PhraseMatch | null {
+  const { tokens } = spoken;
   const wildcard = phrase.endsWith(' *');
   const words = (wildcard ? phrase.slice(0, -2) : phrase).split(' ');
   if (wildcard) {
@@ -54,7 +92,7 @@ function matchPhrase(phrase: string, tokens: string[]): PhraseMatch | null {
   }
   return {
     words: words.length,
-    value: wildcard ? tokens.slice(words.length).join(' ') : undefined,
+    value: wildcard ? tailValue(spoken, words.length) : undefined,
   };
 }
 
@@ -62,8 +100,8 @@ export function matchCommand(
   scopes: readonly VoiceScope[],
   transcript: string,
 ): VoiceMatch | null {
-  const tokens = tokenize(transcript);
-  if (tokens.length === 0) return null;
+  const spoken = readSpokenText(transcript);
+  if (spoken.tokens.length === 0) return null;
 
   // Highest kind priority first; among equals, most recently registered.
   const ordered = scopes
@@ -74,7 +112,7 @@ export function matchCommand(
     let best: { m: PhraseMatch; c: VoiceCommand } | null = null;
     for (const c of s.commands) {
       for (const p of c.phrases) {
-        const m = matchPhrase(p, tokens);
+        const m = matchPhrase(p, spoken);
         if (m && (!best || m.words > best.m.words)) best = { m, c };
       }
     }

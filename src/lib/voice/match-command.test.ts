@@ -28,6 +28,22 @@ describe('matchCommand', () => {
     expect(m?.value).toBe('Aspirin Extra');
   });
 
+  it('preserves apostrophes and inner punctuation in the wildcard tail', () => {
+    const m = matchCommand(
+      [scope('screen', 's', [['reply *']], [jest.fn()])],
+      "Reply I'll be there at 9:30, okay?",
+    );
+    expect(m?.value).toBe("I'll be there at 9:30, okay");
+  });
+
+  it('strips trailing sentence punctuation from the wildcard tail', () => {
+    const m = matchCommand(
+      [scope('dialog', 'd', [['title *']], [jest.fn()])],
+      'Title Dental cleaning.',
+    );
+    expect(m?.value).toBe('Dental cleaning');
+  });
+
   it('does not match a wildcard phrase with no tail', () => {
     expect(
       matchCommand([scope('dialog', 'd', [['name *']], [jest.fn()])], 'name'),

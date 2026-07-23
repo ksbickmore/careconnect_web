@@ -26,7 +26,8 @@ working offline once the model is cached.
   again (or say **"stop listening"**) to stop.
 - Say **"what can I say"** at any time to hear the commands available on the
   current page.
-- While a dialog is open, speaking into a focused text field dictates into it.
+- Speaking while a text field is focused (in a dialog, or in the page — e.g.
+  the messages composer) dictates into that field.
 - The first voice use on a device downloads the speech model (see below).
   While it downloads, the bar shows **"Downloading voice model… N%"**, then
   **"Preparing voice recognition…"** while the model compiles; afterwards the
@@ -52,7 +53,7 @@ Per page (`useVoiceCommands('screen', …)`):
 | Medications | `next/previous medication`, `take medication`, `snooze`, `filter <all/due/taken>`, `add medication` |
 | Schedule | `day view` / `week view` / `month view`, `add appointment` |
 | Health Log | `pain up/down`, `set pain to <0-10>`, `sleep up/down`, `mood <good/ok/low>`, `save entry` |
-| Messages | `open <contact name>` (also `open conversation with <name>`; "doctor" matches "Dr."), `next/previous conversation`, `reply <message>`, `send`, `read aloud`, `back` |
+| Messages | `open <contact name>` (also `open conversation with <name>`; "doctor" matches "Dr."), `next/previous conversation`, `reply <message>` (drafts in one go), `reply` alone (focuses the composer for free dictation), `send`, `read aloud`, `back` |
 | Emergency | `call 911`, `call caregiver`, `confirm` / `yes`, `cancel`, `end call` |
 | Settings | `text size <standard/large/extra large>`, `reduced motion on/off` |
 | Profile | `sign out` / `log out` |
@@ -85,9 +86,18 @@ Every final transcript flows through `VoiceInputBar.handleFinal`
    trailing `*` in a phrase captures the remainder as the command's value.
 2. If a dialog is open: **dictation** into its focused text field, then dialog
    **buttons by accessible name**.
-3. Otherwise: **navigation keywords**
-   (`src/lib/voice/navigation-keywords.ts`), then main-content **buttons by
-   accessible name**.
+3. Otherwise: **dictation** into a focused main-content text field (e.g. the
+   messages composer — focus it by hand or by saying "reply"), then
+   **navigation keywords** (`src/lib/voice/navigation-keywords.ts`), then
+   main-content **buttons by accessible name**. Dictation runs first so
+   free-form speech is not hijacked by a navigation keyword it happens to
+   contain; while a text field is focused, navigate by blurring it first or
+   by tapping the nav.
+4. No match: the bar shows `Heard: "…"` and suggests "what can I say".
+
+Wildcard (`*`) captures keep the original spelling and punctuation of the
+tail ("I'll be there") but drop trailing sentence punctuation added by
+Whisper, so "Title Dental cleaning." fills the field with "Dental cleaning".
 4. No match: the bar shows `Heard: "…"` and suggests "what can I say".
 
 Feedback strings returned by command handlers are shown in the bar and

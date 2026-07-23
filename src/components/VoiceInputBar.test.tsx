@@ -220,6 +220,28 @@ describe('VoiceInputBar', () => {
       expect(onSave).toHaveBeenCalled();
     });
 
+    it('dictates into a focused main-content field before navigation keywords', () => {
+      mockSpeech({});
+      render(
+        <MemoryRouter initialEntries={[routes.messages]}>
+          <main>
+            <label htmlFor="message-input">Message Dr. Park</label>
+            <input id="message-input" type="text" />
+          </main>
+          <VoiceInputBar />
+          <LocationProbe />
+        </MemoryRouter>,
+      );
+      const input = screen.getByLabelText('Message Dr. Park');
+      input.focus();
+
+      // Contains the nav keyword "appointment" — dictation must win.
+      speak("I'll bring the log to my appointment.");
+      expect(input).toHaveValue("I'll bring the log to my appointment.");
+      expect(screen.getByText('Added to Message Dr. Park.')).toBeInTheDocument();
+      expect(screen.getByTestId('location')).toHaveTextContent(routes.messages);
+    });
+
     it('navigates on a navigation keyword', () => {
       renderBar();
       speak('go to medications');

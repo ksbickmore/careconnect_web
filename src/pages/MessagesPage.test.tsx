@@ -140,6 +140,32 @@ describe('MessagesPage', () => {
     );
   });
 
+  it('focuses the composer with a bare "reply" so dictation lands there', async () => {
+    renderMessages();
+
+    expect(speak('reply').feedback).toBe('Open a conversation first.');
+
+    speak('open doctor park');
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 2, name: 'Dr. Park' })).toHaveFocus(),
+    );
+
+    expect(speak('reply').feedback).toBe('Dictate your message, then say "send".');
+    expect(screen.getByLabelText('Message Dr. Park')).toHaveFocus();
+  });
+
+  it('keeps apostrophes in a spoken reply draft', () => {
+    renderMessages();
+    speak('open doctor park');
+
+    expect(speak("Reply I'll be there tomorrow").feedback).toBe(
+      'Reply drafted: I\'ll be there tomorrow. Say "send" to send it.',
+    );
+    expect(screen.getByLabelText('Message Dr. Park')).toHaveValue(
+      "I'll be there tomorrow",
+    );
+  });
+
   it('reads the latest message aloud when speech synthesis exists', () => {
     const speakSpy = jest.fn();
     Object.defineProperty(window, 'speechSynthesis', {

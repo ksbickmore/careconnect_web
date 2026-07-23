@@ -59,6 +59,14 @@ export function VoiceInputBar() {
         return;
       }
     } else {
+      // 2c. Dictation into a focused text field in the main content (e.g.
+      // the messages composer) — before navigation keywords, so free-form
+      // speech is not hijacked by a keyword it happens to contain.
+      const label = dictateIntoFocusedField(final);
+      if (label) {
+        say(`Added to ${label}.`);
+        return;
+      }
       // 3. Navigation keywords (lenient substring matching).
       const command = parseNavigationKeyword(final);
       const sameRoute = command != null && command.route === location.pathname;

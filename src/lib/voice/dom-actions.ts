@@ -61,13 +61,15 @@ function setNativeValue(el: HTMLInputElement | HTMLTextAreaElement, value: strin
 const TEXT_TYPES = new Set(['text', 'search', 'email', 'tel', 'url', '']);
 
 export function dictateIntoFocusedField(text: string): string | null {
-  const dialog = openDialog();
-  if (!dialog) return null;
+  // Open dialog first; otherwise the main content (e.g. the messages
+  // composer), so dictation also works outside dialogs.
+  const root = openDialog() ?? document.querySelector<HTMLElement>('main');
+  if (!root) return null;
   const el = document.activeElement;
   const isText =
     (el instanceof HTMLInputElement && TEXT_TYPES.has(el.type)) ||
     el instanceof HTMLTextAreaElement;
-  if (!isText || !dialog.contains(el)) return null;
+  if (!isText || !root.contains(el)) return null;
   // Search boxes match on words; Whisper's sentence punctuation ("Aspirin.")
   // would poison the query. Notes and message drafts keep it.
   const spoken =
@@ -76,7 +78,7 @@ export function dictateIntoFocusedField(text: string): string | null {
       : text;
   setNativeValue(el, el.value ? `${el.value} ${spoken}` : spoken);
   const label = el.id
-    ? dialog.querySelector<HTMLLabelElement>(`label[for="${el.id}"]`)?.textContent
+    ? root.querySelector<HTMLLabelElement>(`label[for="${el.id}"]`)?.textContent
     : null;
   return label?.trim() ?? 'field';
 }

@@ -82,6 +82,20 @@ describe('dictateIntoFocusedField', () => {
     expect(screen.getByLabelText('Dose')).toHaveValue('10 milligrams');
   });
 
+  it('dictates into a focused main-content field when no dialog is open', () => {
+    document.body.innerHTML =
+      '<main><label for="m">Message Dr. Park</label><input id="m" type="text" /></main>';
+    const input = document.getElementById('m') as HTMLInputElement;
+    input.focus();
+    expect(dictateIntoFocusedField('Hello there')).toBe('Message Dr. Park');
+    expect(input.value).toBe('Hello there');
+  });
+
+  it('returns null without a dialog when no main-content field is focused', () => {
+    document.body.innerHTML = '<main><input id="m" type="text" /></main>';
+    expect(dictateIntoFocusedField('hello')).toBeNull();
+  });
+
   it('returns null when focus is outside the dialog or not a text field', () => {
     document.body.innerHTML =
       '<main><input id="out" /></main><div role="dialog"><button type="button">X</button></div>';

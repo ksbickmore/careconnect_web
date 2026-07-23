@@ -109,6 +109,17 @@ export function MessagesPage() {
       },
     },
     {
+      // Bare "reply" (no message): focus the composer so the next thing the
+      // user says is dictated into it by the voice bar's dictation fallback.
+      phrases: ['reply', 'dictate'],
+      hint: 'reply',
+      run: () => {
+        if (!selected) return 'Open a conversation first.';
+        document.getElementById('message-input')?.focus();
+        return 'Dictate your message, then say "send".';
+      },
+    },
+    {
       phrases: ['send', 'send message'],
       hint: 'send',
       run: () => {
