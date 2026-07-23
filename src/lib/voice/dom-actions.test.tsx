@@ -4,6 +4,7 @@ import {
   clickButtonByName,
   dictateIntoFocusedField,
   openDialog,
+  selectOptionById,
 } from './dom-actions';
 
 afterEach(() => {
@@ -101,6 +102,36 @@ describe('dictateIntoFocusedField', () => {
       '<main><input id="out" /></main><div role="dialog"><button type="button">X</button></div>';
     (document.getElementById('out') as HTMLInputElement).focus();
     expect(dictateIntoFocusedField('hello')).toBeNull();
+  });
+});
+
+describe('selectOptionById', () => {
+  const selectHtml =
+    '<div role="dialog"><label for="s">Schedule</label>' +
+    '<select id="s"><option>Once daily</option><option>Twice daily</option>' +
+    '<option>As needed</option><option>Nightly</option></select></div>';
+
+  it('selects an option by spoken label and fires change', () => {
+    document.body.innerHTML = selectHtml;
+    const select = document.getElementById('s') as HTMLSelectElement;
+    const onChange = jest.fn();
+    select.addEventListener('change', onChange);
+    expect(selectOptionById('s', 'twice daily')).toBe('Twice daily');
+    expect(select.value).toBe('Twice daily');
+    expect(onChange).toHaveBeenCalled();
+  });
+
+  it('matches loosely, ignoring case and punctuation', () => {
+    document.body.innerHTML = selectHtml;
+    expect(selectOptionById('s', 'As needed.')).toBe('As needed');
+    expect((document.getElementById('s') as HTMLSelectElement).value).toBe('As needed');
+  });
+
+  it('returns null for an unknown option or a non-select element', () => {
+    document.body.innerHTML = selectHtml + '<input id="i" />';
+    expect(selectOptionById('s', 'whenever I feel like it')).toBeNull();
+    expect(selectOptionById('i', 'once daily')).toBeNull();
+    expect(selectOptionById('missing', 'once daily')).toBeNull();
   });
 });
 

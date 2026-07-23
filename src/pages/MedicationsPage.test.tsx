@@ -166,6 +166,28 @@ describe('MedicationsPage', () => {
     expect(screen.getByRole('button', { name: /Fish Oil/ })).toBeInTheDocument();
   });
 
+  it('fills the schedule, time label, and instructions by voice', () => {
+    renderMedications();
+    speak('add medication');
+    const dialog = screen.getByRole('dialog', { name: 'Add medication' });
+
+    expect(speak('schedule twice daily').feedback).toBe('Schedule set to Twice daily.');
+    expect(within(dialog).getByLabelText('Schedule')).toHaveValue('Twice daily');
+    expect(speak('schedule whenever').feedback).toBe(
+      'Say "schedule" followed by once daily, twice daily, as needed, or nightly.',
+    );
+
+    expect(speak('time label 8 am daily').feedback).toBe('Time label set to 8 am daily.');
+    expect(within(dialog).getByLabelText('Time label')).toHaveValue('8 am daily');
+    expect(speak('time 9 pm').feedback).toBe('Time label set to 9 pm.');
+    expect(within(dialog).getByLabelText('Time label')).toHaveValue('9 pm');
+
+    expect(speak('instructions take with food').feedback).toBe(
+      'Instructions set to take with food.',
+    );
+    expect(within(dialog).getByLabelText('Instructions')).toHaveValue('take with food');
+  });
+
   it('closes the add-medication dialog with the voice cancel command', () => {
     renderMedications();
     speak('add medication');

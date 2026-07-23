@@ -58,6 +58,31 @@ function setNativeValue(el: HTMLInputElement | HTMLTextAreaElement, value: strin
   el.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
+/**
+ * Pick a `<select>` option by its spoken label (voice dialog commands like
+ * "schedule *"). Loose match: case/punctuation ignored, and a partial spoken
+ * value ("daily") matches the first option containing it. Returns the chosen
+ * option's label, or null if the element or option was not found.
+ */
+export function selectOptionById(id: string, spoken: string): string | null {
+  const el = document.getElementById(id);
+  if (!(el instanceof HTMLSelectElement)) return null;
+  const target = normalize(spoken);
+  if (!target) return null;
+  for (const option of el.options) {
+    const label = normalize(option.textContent ?? option.value);
+    if (label === target || label.includes(target) || target.includes(label)) {
+      // Native setter so a controlled React select sees the change too.
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!
+        .set!.call(el, option.value);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return option.textContent?.trim() ?? option.value;
+    }
+  }
+  return null;
+}
+
 const TEXT_TYPES = new Set(['text', 'search', 'email', 'tel', 'url', '']);
 
 export function dictateIntoFocusedField(text: string): string | null {

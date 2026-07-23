@@ -63,7 +63,7 @@ screen commands):
 
 | Dialog | Commands |
 | --- | --- |
-| Add medication | `name <text>`, `dose <text>`, `save`, `cancel` |
+| Add medication | `name <text>`, `dose <text>`, `schedule <once daily / twice daily / as needed / nightly>`, `time <label>` (also `time label <label>`), `instructions <text>`, `save`, `cancel` |
 | New appointment | `title <text>`, `clinician <name>` (also `doctor <name>`), `location <place>`, `date <spoken date>`, `time <spoken time>`, `save`, `cancel` |
 
 Spoken dates accept "today", "tomorrow", "next friday", "july 5", "the fifth

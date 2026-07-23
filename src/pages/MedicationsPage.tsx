@@ -7,7 +7,7 @@ import { TwoStepConfirm } from '@/components/TwoStepConfirm';
 import { slugify } from '@/lib/format';
 import { useArrowList } from '@/lib/use-arrow-list';
 import { usePageMeta } from '@/lib/use-page-meta';
-import { fillFieldById } from '@/lib/voice/dom-actions';
+import { fillFieldById, selectOptionById } from '@/lib/voice/dom-actions';
 import { useVoiceCommands } from '@/lib/voice/use-voice-commands';
 import type { Medication } from '@/models/types';
 import { useAnnouncerStore } from '@/stores/announcer-store';
@@ -151,6 +151,32 @@ export function MedicationsPage() {
               fillFieldById('med-dose', value)
                 ? `Dose set to ${value}.`
                 : 'Could not find the dose field.',
+          },
+          {
+            phrases: ['schedule *'],
+            hint: 'schedule <once daily, twice daily, as needed, nightly>',
+            run: (value = '') => {
+              const label = selectOptionById('med-schedule', value);
+              return label
+                ? `Schedule set to ${label}.`
+                : 'Say "schedule" followed by once daily, twice daily, as needed, or nightly.';
+            },
+          },
+          {
+            phrases: ['time *', 'time label *'],
+            hint: 'time <label, e.g. 8 am daily>',
+            run: (value = '') =>
+              fillFieldById('med-time', value)
+                ? `Time label set to ${value}.`
+                : 'Could not find the time field.',
+          },
+          {
+            phrases: ['instructions *'],
+            hint: 'instructions <text>',
+            run: (value = '') =>
+              fillFieldById('med-instructions', value)
+                ? `Instructions set to ${value}.`
+                : 'Could not find the instructions field.',
           },
           {
             phrases: ['save', 'save medication'],
